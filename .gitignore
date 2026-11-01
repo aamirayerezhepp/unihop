@@ -1,0 +1,7 @@
+node_modules
+dist
+artifact
+.env.local
+.firebase
+.claude
+*.log
