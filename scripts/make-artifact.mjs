@@ -1,5 +1,5 @@
 // Turns the Vite build into one self-contained page for publishing as a Claude artifact:
-// CSS and JS are inlined; mascot images stay as files at orientir-assets/.
+// CSS and JS are inlined; the mascot images are already inside the JS as data URLs.
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';

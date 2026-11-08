@@ -1,7 +1,9 @@
 /* Browser copy of the student's data. The same shape is mirrored to the artifact's private db when available. */
 const LS_KEY = 'orientir-state-v1';
 
-const guessLang = () => { try { return /^kk/i.test(navigator.language || '') ? 'kz' : 'ru'; } catch (e) { return 'ru'; } };
+const guessLang = () => {
+  try { const l = navigator.language || ''; return /^kk/i.test(l) ? 'kz' : /^en/i.test(l) ? 'en' : 'ru'; } catch (e) { return 'ru'; }
+};
 export const empty = (lang = guessLang()) => ({v:3, lang, name:'', profile:null, done:{}, apps:[], checkins:[], docs:{}});
 
 /* Accepts saved data from any earlier version; returns null when it can't be used. */

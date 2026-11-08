@@ -51,8 +51,8 @@ export function AppStateProvider({ children }){
   }, [state]);
 
   /* ---- language ---- */
-  const lang = state.lang === 'kz' ? 'kz' : 'ru';
-  useEffect(() => { document.documentElement.lang = lang === 'kz' ? 'kk' : 'ru'; }, [lang]);
+  const lang = ['kz', 'en'].includes(state.lang) ? state.lang : 'ru';
+  useEffect(() => { document.documentElement.lang = lang === 'kz' ? 'kk' : lang; }, [lang]);
   const t = useCallback((key, ...args) => translate(lang, key, ...args), [lang]);
   const L = useCallback(v => pick(lang, v), [lang]);
   const setLang = useCallback(l => update(s => { s.lang = l; }), [update]);
@@ -128,7 +128,7 @@ export function AppStateProvider({ children }){
   const [test, setTest] = useState(null);
   const startTest = useCallback(prefill => setTest({step:0, a:clone(prefill || state.profile || {})}), [state.profile]);
   const finishTest = useCallback(a => {
-    update(s => { s.profile = {grade:Number(a.grade), country:a.country, english:a.english, grades:a.grades, extra:a.extra, budget:a.budget, field:a.field, regions:a.regions || []}; });
+    update(s => { s.profile = {grade:Number(a.grade), country:a.country, english:a.english, sat:a.sat || 'none', grades:a.grades, extra:a.extra, budget:a.budget, field:a.field, regions:a.regions || []}; });
     setTest(null);
     go('result');
   }, [update]);
@@ -152,7 +152,7 @@ export function AppStateProvider({ children }){
   const sendChat = useCallback(async raw => {
     const text = (raw || '').trim();
     if (!text || chatRef.current.busy) return;
-    const preset = PRESETS.find(x => x.q.ru === text || x.q.kz === text);
+    const preset = PRESETS.find(x => x.q.ru === text || x.q.kz === text || x.q.en === text);
     const userTurn = {id:uid(), role:'user', content:text};
     if (!sample || chatAvail === false) {
       const reply = preset

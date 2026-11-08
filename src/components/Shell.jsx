@@ -25,6 +25,7 @@ export function LangSwitch(){
     <div className="lang" role="group" aria-label={t('lang.aria')}>
       <button type="button" aria-pressed={lang === 'ru'} onClick={() => setLang('ru')}>RU</button>
       <button type="button" aria-pressed={lang === 'kz'} onClick={() => setLang('kz')}>KZ</button>
+      <button type="button" aria-pressed={lang === 'en'} onClick={() => setLang('en')}>EN</button>
     </div>
   );
 }
@@ -46,7 +47,7 @@ export function Public({ hero, children }){
     <>
       <div className="band">
         <div className="wrap topbar">
-          <a href="#home" className="brand"><Logo height={30} onYellow /></a>
+          <a href="#home" className="brand"><Logo variant="pub" onYellow /></a>
           <div className="top-right">
             <nav className="pubnav" aria-label="UniHop"><a href="#grants">{t('nav.grants')}</a><a href="#koyan">{t('nav.koyan')}</a><a href="#care">{t('nav.care')}</a></nav>
             <LangSwitch />
@@ -77,7 +78,7 @@ export function Cabinet({ children }){
   return (
     <div className="cab">
       <aside className="side">
-        <a className="side-logo" href="#home"><Logo height={30} /></a>
+        <a className="side-logo" href="#home"><Logo variant="side" /></a>
         <nav className="side-nav" aria-label={t('nav.aria')}>
           {items.map(([id, label, count]) => (
             <a key={id} href={'#' + id} aria-current={view === id ? 'page' : undefined}>
@@ -89,7 +90,7 @@ export function Cabinet({ children }){
       </aside>
       <div className="cab-main">
         <header className="mtop">
-          <a href="#home"><Logo height={24} /></a>
+          <a href="#home"><Logo variant="mtop" /></a>
           <div className="mtop-r">
             <LangSwitch />
             <a className="iconbtn" href="#koyan" aria-label={t('nav.koyan')}><Koyan pose="idle" size={30} /></a>

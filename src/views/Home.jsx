@@ -52,7 +52,7 @@ function Landing(){
             <ul className="bullets">{['land.a1', 'land.a2', 'land.a3', 'land.a4', 'land.a5'].map(k => <li key={k}>{t(k)}</li>)}</ul>
           </div>
           <div className="bcard chat" style={{flex:'1 1 400px', minWidth:0}}>
-            <div className="chat-head"><Koyan pose="idle" size={40} /><b>Қоян</b><span>{t('aiHelper')}</span></div>
+            <div className="chat-head"><Koyan pose="idle" size={40} /><b>{t('koyan.name')}</b><span>{t('aiHelper')}</span></div>
             <div className="chat-log" style={{minHeight:0}}>
               <div className="bubble me">{L(PRESETS[0].q)}</div>
               <div className="msg"><Koyan pose="laptop" size={44} /><div className="bubble">{L(PRESETS[0].a)}<p className="note">{L(PRESETS[0].src)}</p></div></div>

@@ -16,6 +16,7 @@ export default function Docs(){
 
   const facts = p ? [
     ['pf.grade', t('result.grade', p.grade)], ['pf.country', L(COUNTRIES[p.country])], ['pf.english', optLabel('english', p.english, lang)],
+    ['pf.sat', optLabel('sat', p.sat || 'none', lang)],
     ['pf.grades', optLabel('grades', p.grades, lang)], ['pf.extra', optLabel('extra', p.extra, lang)], ['pf.budget', optLabel('budget', p.budget, lang)],
     ['pf.field', optLabel('field', p.field, lang)], ['pf.regions', effRegions(p).map(r => L(REGIONS[r].label)).join(', ')]
   ] : [];

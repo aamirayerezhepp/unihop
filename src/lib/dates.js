@@ -10,11 +10,14 @@ const MON = {
       short:['янв','фев','мар','апр','мая','июн','июл','авг','сен','окт','ноя','дек']},
   kz:{gen:['қаңтар','ақпан','наурыз','сәуір','мамыр','маусым','шілде','тамыз','қыркүйек','қазан','қараша','желтоқсан'],
       nom:['Қаңтар','Ақпан','Наурыз','Сәуір','Мамыр','Маусым','Шілде','Тамыз','Қыркүйек','Қазан','Қараша','Желтоқсан'],
-      short:['қаң','ақп','нау','сәу','мам','мау','шіл','там','қыр','қаз','қар','жел']}
+      short:['қаң','ақп','нау','сәу','мам','мау','шіл','там','қыр','қаз','қар','жел']},
+  en:{gen:['January','February','March','April','May','June','July','August','September','October','November','December'],
+      nom:['January','February','March','April','May','June','July','August','September','October','November','December'],
+      short:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']}
 };
 const M = lang => MON[lang] || MON.ru;
 
-/* "13 января 2027" / "2027 жылғы 13 қаңтар" */
+/* "13 января 2027" / "2027 жылғы 13 қаңтар" / "13 January 2027" */
 export const fmtDate = (s, lang = 'ru') => {
   const d = parseISO(s), day = d.getDate(), mon = M(lang).gen[d.getMonth()], y = d.getFullYear();
   return lang === 'kz' ? `${y} жылғы ${day} ${mon}` : `${day} ${mon} ${y}`;
@@ -22,6 +25,14 @@ export const fmtDate = (s, lang = 'ru') => {
 export const fmtShort = (s, lang = 'ru') => { const d = parseISO(s); return `${d.getDate()} ${M(lang).short[d.getMonth()]}`; };
 export const monthTitle = (y, m, lang = 'ru') => `${M(lang).nom[m - 1]} ${y}`;
 export const daysLeft = s => Math.round((parseISO(s) - today) / 864e5);
+
+/* The next date (today or later) with this month-day, e.g. "01-15" → "2027-01-15". */
+export const nextDate = mmdd => {
+  const y = today.getFullYear(), d = `${y}-${mmdd}`;
+  return daysLeft(d) >= 0 ? d : `${y + 1}-${mmdd}`;
+};
+/* The soonest upcoming date among several month-days. */
+export const nextOf = list => (list || []).map(nextDate).sort()[0] || '';
 
 export const plural = (n, one, few, many) => {
   const a = Math.abs(n) % 100, b = a % 10;
@@ -31,6 +42,8 @@ export const plural = (n, one, few, many) => {
   return many;
 };
 /* Kazakh nouns stay singular after a number: "5 күн". */
-export const daysWord = (n, lang = 'ru') => lang === 'kz' ? `${n} күн` : `${n} ${plural(n, 'день', 'дня', 'дней')}`;
-export const stepsWord = (n, lang = 'ru') => lang === 'kz' ? `${n} қадам` : `${n} ${plural(n, 'шаг', 'шага', 'шагов')}`;
+export const daysWord = (n, lang = 'ru') =>
+  lang === 'kz' ? `${n} күн` : lang === 'en' ? `${n} ${n === 1 ? 'day' : 'days'}` : `${n} ${plural(n, 'день', 'дня', 'дней')}`;
+export const stepsWord = (n, lang = 'ru') =>
+  lang === 'kz' ? `${n} қадам` : lang === 'en' ? `${n} ${n === 1 ? 'step' : 'steps'}` : `${n} ${plural(n, 'шаг', 'шага', 'шагов')}`;
 export const uid = () => 'a' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);

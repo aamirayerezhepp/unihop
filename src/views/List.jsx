@@ -3,8 +3,9 @@ import { useApp } from '../state/AppState.jsx';
 import { Cabinet, PageHead } from '../components/Shell.jsx';
 import { BASKETS, CHECKS, STATUSES } from '../data/reference.js';
 import { daysLeft, daysWord, fmtDate } from '../lib/dates.js';
+import CatalogCombo from '../components/CatalogCombo.jsx';
 
-const EMPTY_FORM = {name:'', kind:'uni', basket:'', deadline:''};
+const EMPTY_FORM = {name:'', kind:'uni', basket:'', deadline:'', url:'', approx:false, from:''};
 
 export default function List(){
   const { state, update, addApp, t, L, lang } = useApp();
@@ -19,7 +20,7 @@ export default function List(){
     e.preventDefault();
     const name = form.name.trim();
     if (!name) { setErr(t('apps.err')); return; }
-    addApp({name, kind:form.kind, basket:form.basket, deadline:form.deadline});
+    addApp({name, kind:form.kind, basket:form.basket, deadline:form.deadline, url:form.url, approx:form.approx, from:form.from});
     setForm(EMPTY_FORM); setErr('');
   };
 
@@ -46,9 +47,10 @@ export default function List(){
                 </div>
                 <h3>{a.name}</h3>
                 <p className="small muted">{a.deadline
-                  ? t('apps.deadline', fmtDate(a.deadline, lang)) + (a.status === 'prep' ? (d < 0 ? t('apps.past') : t('apps.left', daysWord(d, lang))) : '')
+                  ? t('apps.deadline', (a.approx ? '≈ ' : '') + fmtDate(a.deadline, lang)) + (a.status === 'prep' ? (d < 0 ? t('apps.past') : t('apps.left', daysWord(d, lang))) : '')
                   : t('apps.noDeadline')}</p>
-                {(a.noteKey || a.note) && <p className="small muted">{a.noteKey ? t(a.noteKey) : a.note}</p>}
+                {(a.noteKey || a.note || a.approx) && <p className="small muted">{a.noteKey ? t(a.noteKey) : a.note || t('cat.approxNote')}</p>}
+                {a.url && <a className="small bold" href={a.url} target="_blank" rel="noopener">{t('apps.site')}</a>}
               </div>
               <label className="small bold field-inline">{t('apps.status')}
                 <select className="select" value={a.status} onChange={e => edit(a.id, x => { x.status = e.target.value; })}>
@@ -82,11 +84,15 @@ export default function List(){
         <h2>{t('apps.addH')}</h2>
         <div className="field">
           <label htmlFor="app-name">{t('apps.name')}</label>
-          <input className="input" id="app-name" maxLength={80} placeholder={t('apps.namePh')} value={form.name} onChange={e => setForm({...form, name:e.target.value})} />
+          <CatalogCombo id="app-name" kind={form.kind} value={form.name}
+            onType={name => setForm({...form, name, url:'', approx:false, from:''})}
+            onPick={it => setForm({...form, name:it.title, deadline:it.date || form.deadline, url:it.url || '', approx:!!it.approx, from:it.from || ''})} />
+          <p className="small muted">{form.kind === 'grant' ? t('cat.hintGrant') : t('cat.hint')}</p>
+          {form.url && <a className="small bold" href={form.url} target="_blank" rel="noopener">{t('apps.site')}</a>}
         </div>
         <div className="row top">
           <div className="field grow"><label htmlFor="app-kind">{t('apps.kind')}</label>
-            <select className="select" id="app-kind" value={form.kind} onChange={e => setForm({...form, kind:e.target.value})}><option value="uni">{t('apps.uni')}</option><option value="grant">{t('apps.grant')}</option></select></div>
+            <select className="select" id="app-kind" value={form.kind} onChange={e => setForm({...EMPTY_FORM, basket:form.basket, kind:e.target.value})}><option value="uni">{t('apps.uni')}</option><option value="grant">{t('apps.grant')}</option></select></div>
           <div className="field grow"><label htmlFor="app-basket">{t('apps.basket')}</label>
             <select className="select" id="app-basket" value={form.basket} onChange={e => setForm({...form, basket:e.target.value})}>
               <option value="">{t('apps.noBasket')}</option>{Object.entries(BASKETS).map(([k, v]) => <option key={k} value={k}>{L(v)}</option>)}

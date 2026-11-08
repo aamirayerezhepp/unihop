@@ -24,7 +24,7 @@ export default function Chat(){
     <Cabinet>
       <PageHead pose="laptop" title={t('chat.h1')} sub={t('chat.sub')} />
       <div className="bcard chat">
-        <div className="chat-head"><Koyan pose="idle" size={40} /><b>Қоян</b><span>{t('aiHelper')}</span></div>
+        <div className="chat-head"><Koyan pose="idle" size={40} /><b>{t('koyan.name')}</b><span>{t('aiHelper')}</span></div>
         <div className="chat-log" ref={logRef} aria-live="polite">
           <div className="msg"><Koyan pose="joy" size={44} /><div className="bubble">{t('chat.hello', !!state.profile)}</div></div>
           {chat.turns.map(turn => turn.role === 'user'

@@ -109,7 +109,7 @@ export default function Care(){
 
       {doneThisWeek ? (
         <section className="card">
-          <div className="card-h"><h2>{t('care.doneH', fmtShort(lc.date, lang))}</h2><span className="tag blue">{t('care.index', fmtIdx(wellIndex(lc)))}</span></div>
+          <div className="card-h"><h2>{t('care.doneH', fmtShort(lc.date, lang))}</h2><span className="tag blue">{t('care.index', fmtIdx(wellIndex(lc), lang))}</span></div>
           {tipKeys(lc).map(k => <div key={k} className="hint-row"><Koyan pose="support" size={52} /><div className="bubble">{t(k)}</div></div>)}
           <div><button type="button" className="btn ghost sm" onClick={() => { setCi({}); setCrisis(false); }}>{t('care.again')}</button></div>
         </section>

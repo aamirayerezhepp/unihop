@@ -6,7 +6,7 @@ import { GRANTS, GRANT_TASK } from '../data/grants.js';
 import { DOC_GROUPS } from '../data/docs.js';
 import { optLabel } from '../data/questions.js';
 
-const g = (ru, kz) => ({ru, kz});
+const g = (ru, kz, en) => ({ru, kz, en});
 
 /* Calendar year in which the student's final (11th) school year starts. */
 export function finalYear(p){
@@ -21,39 +21,40 @@ export function recommend(p){
   const out = [];
   { let s = 50; const r = [];
     if (full || partial) {
-      if (strong) { s += 20; r.push(g('Need-blind вузы покрывают до полной стоимости учёбы — для сильных учеников.','Need-blind ЖОО-лар мықты оқушыларға оқудың толық құнына дейін төлейді.')); }
-      else { s -= 15; r.push(g('Полная финпомощь есть, но конкурс за неё очень высокий.','Толық қаржылай көмек бар, бірақ оған бәсеке өте жоғары.')); }
-    } else { s += 15; r.push(g('Самый большой выбор программ, специальность можно выбрать позже.','Бағдарламалар таңдауы ең көп, мамандықты кейін таңдауға болады.')); }
-    if (eng) s += 10; else r.push(g('Понадобятся IELTS или Duolingo и, часто, SAT.','IELTS немесе Duolingo, көбіне SAT те керек болады.'));
+      if (strong) { s += 20; r.push(g('Need-blind вузы покрывают до полной стоимости учёбы — для сильных учеников.','Need-blind ЖОО-лар мықты оқушыларға оқудың толық құнына дейін төлейді.','Need-blind universities cover up to the full cost for strong students.')); }
+      else { s -= 15; r.push(g('Полная финпомощь есть, но конкурс за неё очень высокий.','Толық қаржылай көмек бар, бірақ оған бәсеке өте жоғары.','Full aid exists, but competition for it is very high.')); }
+    } else { s += 15; r.push(g('Самый большой выбор программ, специальность можно выбрать позже.','Бағдарламалар таңдауы ең көп, мамандықты кейін таңдауға болады.','The widest choice of programmes; you can choose a major later.')); }
+    if (eng) s += 10; else r.push(g('Понадобятся IELTS или Duolingo и, часто, SAT.','IELTS немесе Duolingo, көбіне SAT те керек болады.','You will need IELTS or Duolingo, and often the SAT.'));
+    if (p.sat === 's1400') s += 5;
     out.push({r:'us', s, reasons:r}); }
   { let s = 50; const r = [];
-    if (full) { s -= 30; r.push(g('Для бакалавриата финпомощи почти нет.','Бакалавриатқа қаржылай көмек жоқтың қасы.')); }
-    else if (partial) { s -= 15; r.push(g('Стипендии для иностранцев небольшие и редкие.','Шетелдіктерге стипендиялар аз әрі шағын.')); }
-    else { s += 15; r.push(g('Бакалавриат за 3 года, одна заявка через UCAS на 5 программ.','Бакалавриат 3 жыл, UCAS арқылы бір өтініш 5 бағдарламаға.')); }
-    r.push(g('После школы СНГ часто нужен Foundation year.','ТМД мектебінен кейін көбіне Foundation year керек.'));
+    if (full) { s -= 30; r.push(g('Для бакалавриата финпомощи почти нет.','Бакалавриатқа қаржылай көмек жоқтың қасы.','There is almost no aid for undergraduates.')); }
+    else if (partial) { s -= 15; r.push(g('Стипендии для иностранцев небольшие и редкие.','Шетелдіктерге стипендиялар аз әрі шағын.','Scholarships for internationals are small and rare.')); }
+    else { s += 15; r.push(g('Бакалавриат за 3 года, одна заявка через UCAS на 5 программ.','Бакалавриат 3 жыл, UCAS арқылы бір өтініш 5 бағдарламаға.','A 3-year degree, one UCAS application for 5 programmes.')); }
+    r.push(g('После школы СНГ часто нужен Foundation year.','ТМД мектебінен кейін көбіне Foundation year керек.','After a CIS school you often need a Foundation year.'));
     if (strong) s += 5;
     out.push({r:'uk', s, reasons:r}); }
   { let s = 55; const r = [];
-    if (mid || partial) { s += 15; r.push(g('В госвузах Германии почти нет платы, в Италии есть стипендии DSU по доходу семьи.','Германияның мемлекеттік ЖОО-ларында ақы жоқтың қасы, Италияда отбасы табысына қарай DSU стипендиялары бар.')); }
-    else if (full) { s += 10; r.push(g('Stipendium Hungaricum и DSU покрывают обучение и часть расходов на жизнь.','Stipendium Hungaricum мен DSU оқуды және өмір сүру шығынының бір бөлігін өтейді.')); }
-    else { s += 5; r.push(g('Много программ на английском, учёба дешевле, чем в США и Великобритании.','Ағылшынша бағдарламалар көп, оқу АҚШ пен Ұлыбританияға қарағанда арзан.')); }
-    if (!eng) { s -= 5; r.push(g('Нужен английский B2 или язык страны.','Ағылшын тілі B2 деңгейінде немесе сол елдің тілі керек.')); }
+    if (mid || partial) { s += 15; r.push(g('В госвузах Германии почти нет платы, в Италии есть стипендии DSU по доходу семьи.','Германияның мемлекеттік ЖОО-ларында ақы жоқтың қасы, Италияда отбасы табысына қарай DSU стипендиялары бар.','German public universities charge almost nothing; Italy has income-based DSU grants.')); }
+    else if (full) { s += 10; r.push(g('Stipendium Hungaricum и DSU покрывают обучение и часть расходов на жизнь.','Stipendium Hungaricum мен DSU оқуды және өмір сүру шығынының бір бөлігін өтейді.','Stipendium Hungaricum and DSU cover tuition and part of living costs.')); }
+    else { s += 5; r.push(g('Много программ на английском, учёба дешевле, чем в США и Великобритании.','Ағылшынша бағдарламалар көп, оқу АҚШ пен Ұлыбританияға қарағанда арзан.','Many English-taught programmes, cheaper than the US and UK.')); }
+    if (!eng) { s -= 5; r.push(g('Нужен английский B2 или язык страны.','Ағылшын тілі B2 деңгейінде немесе сол елдің тілі керек.','You need B2 English or the local language.')); }
     out.push({r:'eu', s, reasons:r}); }
   { let s = 50; const r = [];
-    if (full) { s -= 20; r.push(g('Финпомощи для иностранцев мало; есть отдельные стипендии вроде Lester B. Pearson.','Шетелдіктерге қаржылай көмек аз; Lester B. Pearson сияқты жеке стипендиялар бар.')); }
-    else if (partial) { s -= 10; r.push(g('Обучение платное, стипендий для иностранцев немного.','Оқу ақылы, шетелдіктерге стипендия аз.')); }
-    else { s += 10; r.push(g('Сильные вузы и возможность работать после учёбы.','Мықты ЖОО-лар және оқудан кейін жұмыс істеу мүмкіндігі.')); }
+    if (full) { s -= 20; r.push(g('Финпомощи для иностранцев мало; есть отдельные стипендии вроде Lester B. Pearson.','Шетелдіктерге қаржылай көмек аз; Lester B. Pearson сияқты жеке стипендиялар бар.','Little aid for internationals; a few awards like Lester B. Pearson.')); }
+    else if (partial) { s -= 10; r.push(g('Обучение платное, стипендий для иностранцев немного.','Оқу ақылы, шетелдіктерге стипендия аз.','Tuition is charged and scholarships for internationals are few.')); }
+    else { s += 10; r.push(g('Сильные вузы и возможность работать после учёбы.','Мықты ЖОО-лар және оқудан кейін жұмыс істеу мүмкіндігі.','Strong universities and the chance to work after graduating.')); }
     if (eng) s += 5;
     out.push({r:'ca', s, reasons:r}); }
   { let s = 50; const r = [];
-    if (full || partial) { s += 20; r.push(g('GKS, MEXT и CSC дают полное финансирование и год языка.','GKS, MEXT және CSC толық қаржыландырады және бір жыл тіл үйретеді.')); }
-    else r.push(g('Сильные технические вузы, учёба дешевле западной.','Мықты техникалық ЖОО-лар, оқу батысқа қарағанда арзан.'));
-    if (['it','eng'].includes(p.field)) { s += 10; r.push(g('Сильные программы в IT и инженерии.','IT және инженерия бағдарламалары мықты.')); }
+    if (full || partial) { s += 20; r.push(g('GKS, MEXT и CSC дают полное финансирование и год языка.','GKS, MEXT және CSC толық қаржыландырады және бір жыл тіл үйретеді.','GKS, MEXT and CSC give full funding and a language year.')); }
+    else r.push(g('Сильные технические вузы, учёба дешевле западной.','Мықты техникалық ЖОО-лар, оқу батысқа қарағанда арзан.','Strong technical universities, cheaper than the West.'));
+    if (['it','eng'].includes(p.field)) { s += 10; r.push(g('Сильные программы в IT и инженерии.','IT және инженерия бағдарламалары мықты.','Strong programmes in IT and engineering.')); }
     out.push({r:'asia', s, reasons:r}); }
   { let s = 50; const r = [];
-    if (full || partial) { s += 20; r.push(g('Türkiye Bursları покрывает обучение, общежитие, стипендию и перелёт.','Türkiye Bursları оқуды, жатақхананы, стипендияны және ұшақ билетін өтейді.')); }
-    else { s += 5; r.push(g('Невысокая стоимость учёбы и жизни.','Оқу мен тұрмыс құны төмен.')); }
-    if (ca) { s += 10; r.push(g('Культурно близко, много студентов из Центральной Азии.','Мәдениеті жақын, Орталық Азиядан студенттер көп.')); }
+    if (full || partial) { s += 20; r.push(g('Türkiye Bursları покрывает обучение, общежитие, стипендию и перелёт.','Türkiye Bursları оқуды, жатақхананы, стипендияны және ұшақ билетін өтейді.','Türkiye Bursları covers tuition, dormitory, stipend and flights.')); }
+    else { s += 5; r.push(g('Невысокая стоимость учёбы и жизни.','Оқу мен тұрмыс құны төмен.','Low tuition and living costs.')); }
+    if (ca) { s += 10; r.push(g('Культурно близко, много студентов из Центральной Азии.','Мәдениеті жақын, Орталық Азиядан студенттер көп.','Culturally close, with many students from Central Asia.')); }
     if (p.grades !== 'high') s += 5;
     out.push({r:'tr', s, reasons:r}); }
   out.forEach(o => { o.s = Math.max(5, Math.min(95, o.s)); o.reasons = o.reasons.slice(0, 2); });
@@ -80,14 +81,16 @@ export function strength(p){
   s += {olymp:3, project:2, none:0.5}[p.extra] || 1;
   return s / 2;
 }
+/* A good SAT raises the chances at US universities only. */
+export const satBonus = p => ({s1400:0.75, s1214:0.35}[p.sat] || 0);
 
 /* Rough estimate, not an admissions forecast: compares strength with each university's selectivity. */
 export function chances(p){
-  const L = strength(p), regs = effRegions(p), ok = FUND_OK[p.budget] || FUND_OK.any;
+  const base = strength(p), regs = effRegions(p), ok = FUND_OK[p.budget] || FUND_OK.any;
   const res = {dream:[], real:[], safe:[]};
   UNIS.filter(u => regs.includes(u.r) && ok.includes(u.fund) && (p.field === 'unsure' || u.f.includes('all') || u.f.includes(p.field)))
     .forEach(u => {
-      const d = u.sel - L;
+      const d = u.sel - (base + (u.r === 'us' ? satBonus(p) : 0));
       if (d > 0.75 && d <= 2.75) res.dream.push({...u, d});
       else if (d > -0.75 && d <= 0.75) res.real.push({...u, d});
       else if (d <= -0.75) res.safe.push({...u, d});
@@ -101,18 +104,21 @@ export function gaps(p){
   const out = [];
   if (lowEng(p)) out.push('gap.ielts');
   if (p.extra === 'none') out.push('gap.extra');
-  if (effRegions(p).includes('us')) out.push('gap.sat');
+  if (effRegions(p).includes('us') && !['s1214', 's1400'].includes(p.sat)) out.push('gap.sat');
   if (p.grades === 'low') out.push('gap.grades');
   if (p.budget === 'full') out.push('gap.grants');
   if (!out.length) out.push('gap.essay');
   return out.slice(0, 4);
 }
 
-/* Grants that fit the profile (all of them before the test). */
+/* Grants that fit the profile (all of them before the test). Home-country and Russian-quota grants follow citizenship. */
 export function fittingGrants(p){
   if (!p) return GRANTS;
   const regs = effRegions(p);
-  return GRANTS.filter(gr => gr.only ? gr.only.includes(p.country) : (gr.region === 'home' || regs.includes(gr.region)));
+  return GRANTS.filter(gr => {
+    if (gr.only && !gr.only.includes(p.country)) return false;
+    return gr.region === 'home' || gr.region === 'ru' || regs.includes(gr.region);
+  });
 }
 
 /* Document checklist for the profile, with progress. */
@@ -131,7 +137,7 @@ export function upcoming(state){
   const fromPlan = plan.filter(t => t.deadline && !state.done[t.id])
     .map(t => ({key:'t-' + t.id, title:t.title, date:t.date, approx:t.approx, code:t.regions ? REGIONS[t.regions[0]].code : ''}));
   const fromApps = state.apps.filter(a => a.deadline && a.status === 'prep' && !(GRANT_TASK[a.from] && plan.some(t => t.id === GRANT_TASK[a.from])))
-    .map(a => ({key:'a-' + a.id, title:a.name, date:a.deadline, approx:false, app:a}));
+    .map(a => ({key:'a-' + a.id, title:a.name, date:a.deadline, approx:!!a.approx, app:a}));
   return [...fromPlan, ...fromApps].filter(x => daysLeft(x.date) >= 0).sort((a, b) => a.date < b.date ? -1 : 1);
 }
 
@@ -155,22 +161,50 @@ export function alerts(state){
 export const hasData = s => !!(s.profile || s.apps.length || s.checkins.length || Object.keys(s.docs || {}).length);
 export const lastCheckin = s => s.checkins.length ? s.checkins[s.checkins.length - 1] : null;
 export const wellIndex = c => (c.mood + c.sleep + (6 - c.stress) + c.support) / 4;
-export const fmtIdx = n => n.toFixed(1).replace('.', ',');
+export const fmtIdx = (n, lang) => lang === 'en' ? n.toFixed(1) : n.toFixed(1).replace('.', ',');
 
-/* Standing instructions for Қоян: sent as the first user turn of every chat call. */
+const LANG_RULE = {
+  ru:'Язык интерфейса ученика: русский. Отвечай на русском, если ученик сам не пишет на другом языке.',
+  kz:'Язык интерфейса ученика: казахский. Отвечай на казахском (кириллица), если ученик сам не пишет на другом языке.',
+  en:'The student\'s interface language is English. Answer in English unless the student writes in another language. In English your name is Qoyan.'
+};
+
+/* Facts for Қоян, checked in November 2026. Shared by every assistant prompt. */
+export function factsText(){
+  const grants = GRANTS.map(gr => `- ${gr.name.ru || gr.name}: ${gr.covers.ru}; сроки: ${gr.when.ru}; кому: ${gr.who.ru}; сайт: ${gr.url}`).join('\n');
+  return `Данные платформы (проверено в ноябре 2026):
+- UCAS (Великобритания), поступление 2027: 15 октября 2026 — Оксфорд, Кембридж, медицина; 13 января 2027, 18:00 по Лондону — остальные программы.
+- США: Common App, ранняя подача обычно 1 или 15 ноября, основная — 1–15 января (например: Harvard, Princeton, Columbia — 1 января; Yale, Cornell, JHU — 2 января; Caltech, Duke, UChicago, Northwestern — 4 января; Stanford, Penn, Brown, NYU, MIT — 5 января; UNC, Purdue — 15 января; Michigan — 1 февраля). Need-blind для иностранцев: Harvard, Yale, Princeton, MIT, Amherst, Dartmouth, Bowdoin; Brown и Notre Dame — с выпуска 2029. Для поступления в 2027 году SAT или ACT обязательны в Harvard, Yale, Stanford, MIT, Caltech, Brown, Dartmouth, Cornell, Johns Hopkins.
+- Визы США: с 1 января 2026 действует запрет на въезд для 39 стран; стран Центральной Азии в нём нет. С 15 сентября 2026 действует правило DHS о фиксированном сроке пребывания по визам F и J — до 4 лет, продление через USCIS.
+- Госгрант Республики Казахстан: заявления подаются после ЕНТ, в 2026 году — 13–20 июля; порог 50–75 баллов в зависимости от направления.
+- IELTS в Казахстане — около 105 тыс. тенге (British Council, 2026); SAT вне США — $68 + $43 = $111; Duolingo English Test — $70.
+- Германия: со школьным аттестатом СНГ обычно нужен Studienkolleg или 1–2 курса вуза дома; в большинстве госвузов учёба бесплатная, кроме Баварии и Баден-Вюртемберга для иностранцев.
+- Италия: региональные стипендии DSU по доходу семьи. Чехия: бесплатно на чешском языке.
+Стипендии:
+${grants}`;
+}
+
+/* The student's profile and next steps, for the assistants. */
+export function profileText(state){
+  const p = state.profile;
+  if (!p) return 'Профиль ученика: ещё не прошёл тест.';
+  const sat = p.sat && p.sat !== 'none' ? optLabel('sat', p.sat) : 'не сдавал';
+  const prof = `${p.grade} класс, страна: ${COUNTRIES[p.country].ru}, IELTS: ${optLabel('english', p.english)}, SAT: ${sat}, оценки: ${optLabel('grades', p.grades)}, достижения: ${optLabel('extra', p.extra)}, бюджет: ${optLabel('budget', p.budget)}, направление: ${optLabel('field', p.field)}, страны: ${effRegions(p).map(r => REGIONS[r].label.ru).join(', ')}.`;
+  const next = buildPlan(p).filter(t => !state.done[t.id]).slice(0, 5).map(t => `- ${t.title.ru} — ${t.approx ? 'примерно ' : ''}${fmtDate(t.date)}`).join('\n');
+  const list = state.apps.slice(0, 10).map(a => `- ${a.name}${a.deadline ? ' (дедлайн ' + fmtDate(a.deadline) + ')' : ''}`).join('\n');
+  return `Профиль ученика: ${prof}${next ? '\nБлижайшие шаги плана:\n' + next : ''}${list ? '\nВузы в его списке:\n' + list : ''}`;
+}
+
+export const langRule = state => LANG_RULE[state.lang] || LANG_RULE.ru;
+
+/* Standing instructions for Қоян, the general assistant: sent as the first user turn of every chat call. */
 export function rulesText(state){
-  const p = state.profile, lang = state.lang === 'kz' ? 'kz' : 'ru';
-  const prof = p
-    ? `${p.grade} класс, страна: ${COUNTRIES[p.country].ru}, IELTS: ${optLabel('english', p.english)}, оценки: ${optLabel('grades', p.grades)}, достижения: ${optLabel('extra', p.extra)}, бюджет: ${optLabel('budget', p.budget)}, направление: ${optLabel('field', p.field)}, страны: ${effRegions(p).map(r => REGIONS[r].label.ru).join(', ')}.`
-    : 'Ученик ещё не прошёл тест.';
-  const next = p ? buildPlan(p).filter(t => !state.done[t.id]).slice(0, 5).map(t => `- ${t.title.ru} — ${t.approx ? 'примерно ' : ''}${fmtDate(t.date)}`).join('\n') : '';
   const docs = docsFor(state);
   const missing = docs.items.filter(i => docs.status(i.id) !== 'done').map(i => i.name.ru).slice(0, 8).join(', ');
-  const grants = GRANTS.map(gr => `- ${gr.name.ru || gr.name}: ${gr.covers.ru}; сроки: ${gr.when.ru}; кому: ${gr.who.ru}; сайт: ${gr.url}`).join('\n');
   return `Ты — Қоян, дружелюбный ИИ-помощник платформы UniHop для школьников 14–18 лет из Казахстана и других стран СНГ, которые поступают в зарубежные вузы на бакалавриат.
 
 Правила:
-1. Язык интерфейса ученика: ${lang === 'kz' ? 'казахский. Отвечай на казахском (кириллица), если ученик сам не пишет по-русски.' : 'русский. Отвечай на русском, если ученик сам не пишет по-казахски.'}
+1. ${langRule(state)}
 2. Отвечай коротко: 2–6 предложений или короткий список. Обращайся на «ты», тепло и просто.
 3. Опирайся на данные ниже и общеизвестные факты. Если не уверен в факте, сроке, цене или требовании — так и скажи и посоветуй проверить на официальном сайте. Не выдумывай цифры, даты, требования и ссылки.
 4. Не пиши за ученика эссе, мотивационные письма и ответы на вопросы вузов. Можно объяснить структуру, задать наводящие вопросы и дать отзыв на его черновик.
@@ -181,15 +215,7 @@ export function rulesText(state){
 9. Пиши простым текстом, без Markdown: без звёздочек, решёток и таблиц.
 
 Сегодня: ${fmtDate(isoOf(today))}.
-Профиль ученика: ${prof}
-${next ? 'Ближайшие шаги его плана:\n' + next + '\n' : ''}${missing ? 'Ещё не готовы документы: ' + missing + '.\n' : ''}
-Данные платформы (проверено в ноябре 2026):
-- UCAS (Великобритания), поступление 2027: 15 октября 2026 — Оксфорд, Кембридж, медицина; 13 января 2027 — остальные программы.
-- США: Common App, ранняя подача обычно 1 или 15 ноября, основная — конец декабря–январь. Need-blind для иностранцев: Harvard, Yale, Princeton, MIT, Amherst, Dartmouth, Bowdoin; Brown и Notre Dame — с выпуска 2029.
-- Визы США: с 1 января 2026 действует запрет на въезд для 39 стран, стран Центральной Азии нет в списке на студенческие визы F/J. Новое правило DHS 2026 года ограничивает статус F-1 сроком программы, не более 4 лет.
-- IELTS в Казахстане — около 95–110 тыс. тенге; SAT вне США — около $111; Duolingo English Test — $70.
-- Германия: со школьным аттестатом СНГ обычно нужен Studienkolleg или 1–2 курса вуза дома; в большинстве госвузов учёба бесплатная, кроме Баварии и Баден-Вюртемберга для иностранцев.
-- Италия: региональные стипендии DSU по доходу семьи. Чехия: бесплатно на чешском языке.
-Стипендии:
-${grants}`;
+${profileText(state)}
+${missing ? 'Ещё не готовы документы: ' + missing + '.\n' : ''}
+${factsText()}`;
 }

@@ -8,13 +8,17 @@
   --f-display:Unbounded, "Golos Text", system-ui, sans-serif;
   --f-body:"Golos Text", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   color-scheme:light;
+  /* No white bands at the notch: the safe-area insets live inside the coloured bars instead. */
+  padding-top:0;padding-bottom:0;
 }
 *{box-sizing:border-box}
+html,body{margin:0;padding:0}
 body{background:var(--white);color:var(--ink);font:400 15px/1.5 var(--f-body);-webkit-font-smoothing:antialiased}
 a{color:var(--blue)} a:hover{color:var(--blue-dark)}
 button,input,select,textarea{font:inherit;color:inherit}
 :focus-visible{outline:3px solid var(--blue);outline-offset:2px}
 h1,h2,h3,p,ul,ol{margin:0}
+h1,h2,h3{overflow-wrap:break-word;hyphens:auto}
 h1{font:800 clamp(36px,6.6vw,76px)/1.0 var(--f-display);letter-spacing:-.03em;text-wrap:balance}
 h1.sm{font-size:clamp(28px,5vw,48px);line-height:1.05}
 h2{font:700 clamp(18px,2.2vw,22px)/1.25 var(--f-display);letter-spacing:-.01em;text-wrap:balance}
@@ -26,16 +30,21 @@ h3{font:700 17px/1.3 var(--f-body)}
 .measure{max-width:62ch}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .koyan{display:block;height:auto;max-width:100%;flex:none}
+svg{max-width:100%;height:auto}
+.logo{display:block;width:auto}
+.logo-pub{height:56px} .logo-side{height:54px} .logo-mtop{height:42px}
+
 .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
 .row.top{align-items:flex-start} .row.end{justify-content:flex-end} .between{justify-content:space-between}
 .stack{display:flex;flex-direction:column;gap:14px}
 
 /* ---------- public pages ---------- */
-.wrap{max-width:1200px;margin:0 auto;padding-left:max(16px, env(safe-area-inset-left,0px));padding-right:max(16px, env(safe-area-inset-right,0px))}
+.wrap{max-width:1440px;margin:0 auto;padding-left:max(16px, env(safe-area-inset-left,0px));padding-right:max(16px, env(safe-area-inset-right,0px))}
 @media (min-width:900px){.wrap{padding-left:max(32px, env(safe-area-inset-left,0px));padding-right:max(32px, env(safe-area-inset-right,0px))}}
+@media (min-width:1280px){.wrap{padding-left:max(56px, env(safe-area-inset-left,0px));padding-right:max(56px, env(safe-area-inset-right,0px))}}
 .band{background:var(--yellow)}
-.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:16px}
-.brand{display:flex;line-height:0}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:max(14px, env(safe-area-inset-top,0px));padding-bottom:14px}
+.brand{display:flex;line-height:0;flex:none}
 .top-right{display:flex;align-items:center;gap:14px}
 .pubnav{display:none;gap:20px;font-weight:600}
 .pubnav a{color:var(--ink);text-decoration:none}
@@ -54,7 +63,7 @@ h3{font:700 17px/1.3 var(--f-body)}
 .split{flex-direction:row;flex-wrap:wrap;align-items:center;gap:36px}
 .assist{background:var(--soft);border-top:3px solid var(--ink);border-bottom:3px solid var(--ink)}
 .bullets{padding-left:22px;display:flex;flex-direction:column;gap:8px;font-size:17px}
-.foot{padding-block:24px 32px;font-size:14px;color:var(--muted)}
+.foot{padding-top:24px;padding-bottom:calc(32px + env(safe-area-inset-bottom,0px));font-size:14px;color:var(--muted)}
 
 /* ---------- shared controls ---------- */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--blue);color:var(--white);border:none;border-radius:999px;padding:13px 24px;font-weight:700;cursor:pointer;text-decoration:none;line-height:1.2;white-space:nowrap}
@@ -128,6 +137,17 @@ textarea.input{min-height:80px;resize:vertical}
 .res li .muted{font-size:13px}
 .addbtn{flex:none;border:2px solid currentColor;background:transparent;color:inherit;border-radius:999px;padding:4px 10px;font:700 13px/1.2 var(--f-body);cursor:pointer;white-space:nowrap}
 .added{flex:none;font-size:13px;font-weight:700;opacity:.75;white-space:nowrap}
+.morebtn{margin-top:12px;border:2px solid currentColor;background:transparent;color:inherit;border-radius:999px;padding:6px 14px;font:700 14px/1.2 var(--f-body);cursor:pointer}
+.combo{position:relative;min-width:0}
+.combo-list{position:absolute;z-index:30;left:0;right:0;top:calc(100% + 4px);max-height:min(320px,50vh);overflow-y:auto;overflow-x:hidden;list-style:none;margin:0;padding:4px;background:var(--white);border:2px solid var(--ink);border-radius:12px;box-shadow:0 8px 24px rgba(17,19,24,.16)}
+.combo-list li{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;cursor:pointer;min-width:0}
+.combo-list li.on{background:var(--blue-tint)}
+.combo-list li .grow{min-width:0}
+.combo-list li b{font-weight:600;overflow-wrap:anywhere}
+.combo-list .alt{color:var(--muted);font-size:13px}
+.combo-list .sub{display:block;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
+.combo-list .when{flex:none;font-size:13px;font-weight:700;white-space:nowrap}
+.combo-list .combo-empty{cursor:default;color:var(--muted)}
 .soft{background:var(--ground);border-radius:16px;padding:16px 20px}
 .gaps{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px}
 .gaps b{font:700 16px var(--f-display)}
@@ -138,7 +158,7 @@ textarea.input{min-height:80px;resize:vertical}
 .side{display:none}
 .cab-main{flex:1 1 auto;min-width:0;display:flex;flex-direction:column}
 .mtop{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--white);border-bottom:3px solid var(--ink);
-  padding:10px max(16px, env(safe-area-inset-right,0px)) 10px max(16px, env(safe-area-inset-left,0px))}
+  padding:calc(8px + env(safe-area-inset-top,0px)) max(16px, env(safe-area-inset-right,0px)) 8px max(16px, env(safe-area-inset-left,0px))}
 .mtop a{line-height:0}
 .mtop-r{display:flex;align-items:center;gap:8px}
 .iconbtn{width:40px;height:40px;border:2px solid var(--ink);border-radius:12px;background:var(--white);display:inline-flex;align-items:center;justify-content:center;overflow:hidden}
@@ -146,7 +166,7 @@ textarea.input{min-height:80px;resize:vertical}
 .bell .ico{width:20px;height:20px}
 .bell .badge{position:absolute;top:-8px;right:-8px;background:var(--blue);color:var(--white);font-size:12px;font-weight:700;border-radius:999px;padding:0 6px;border:2px solid var(--ink);line-height:18px}
 .wide-only{display:none}
-.cab-content{width:100%;max-width:1120px;margin:0 auto;display:flex;flex-direction:column;gap:18px;
+.cab-content{width:100%;max-width:1440px;margin:0 auto;display:flex;flex-direction:column;gap:18px;
   padding-left:max(16px, env(safe-area-inset-left,0px));padding-right:max(16px, env(safe-area-inset-right,0px));padding-block:20px calc(96px + env(safe-area-inset-bottom,0px))}
 .tabs{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--white);border-top:3px solid var(--ink);display:flex;justify-content:space-around;gap:2px;
   padding:6px max(16px, env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(16px, env(safe-area-inset-left,0px))}
@@ -154,7 +174,7 @@ textarea.input{min-height:80px;resize:vertical}
 .tabs .ico{width:22px;height:22px}
 .tabs a[aria-current="page"]{background:var(--yellow);border-color:var(--ink);color:var(--ink)}
 @media (min-width:960px){
-  .side{display:flex;flex-direction:column;gap:22px;width:248px;flex:none;background:var(--white);border-right:3px solid var(--ink);padding:24px 16px;
+  .side{display:flex;flex-direction:column;gap:22px;width:264px;flex:none;background:var(--white);border-right:3px solid var(--ink);padding:calc(20px + env(safe-area-inset-top,0px)) 16px calc(20px + env(safe-area-inset-bottom,0px)) max(16px, env(safe-area-inset-left,0px));
     position:sticky;top:env(safe-area-inset-top,0px);height:100vh;overflow-y:auto}
   .mtop,.tabs{display:none}
   .wide-only{display:inline-flex}
@@ -323,3 +343,5 @@ details.tech .body{color:var(--muted);margin-top:8px;max-width:62ch;display:flex
 .chat-warn{padding:10px 18px;background:var(--ground);font-size:14px;color:var(--muted);border-top:2px solid var(--soft)}
 
 @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+
+@media (max-width:420px){.logo-pub{width:130px;height:auto}.topbar{gap:8px;flex-wrap:wrap}.top-right{gap:8px}.lang button{padding:5px 8px}h1.sm{font-size:25px}}

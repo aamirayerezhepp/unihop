@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { useApp } from '../state/AppState.jsx';
 import { Cabinet, PageHead } from '../components/Shell.jsx';
-import { GRANTS } from '../data/grants.js';
-import { fittingGrants, finalYear } from '../lib/logic.js';
+import { GRANTS, grantDue } from '../data/grants.js';
+import { fittingGrants } from '../lib/logic.js';
 
-const REGION_OPTS = ['all', 'us', 'eu', 'ca', 'asia', 'tr', 'home'];
+const REGION_OPTS = ['all', 'us', 'eu', 'ca', 'asia', 'tr', 'ru', 'home'];
 
 export default function Grants(){
   const { state, addApp, t, L } = useApp();
@@ -18,8 +18,8 @@ export default function Grants(){
   if (onlyFull) list = list.filter(g => g.cover === 'full');
   const inList = id => state.apps.some(a => a.from === id);
   const add = g => {
-    const due = g.due && p ? g.due(finalYear(p)) : '';
-    addApp({from:g.id, name:L(g.name), kind:'grant', deadline:due, noteKey:due ? 'note.lastYear' : ''});
+    const {date, approx} = grantDue(g);
+    addApp({from:g.id, name:L(g.name), kind:'grant', deadline:date, url:g.url, approx, noteKey:approx ? 'note.lastYear' : ''});
   };
 
   return (

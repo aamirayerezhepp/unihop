@@ -7,6 +7,7 @@ import { AccountOffer } from '../components/Account.jsx';
 import { REGIONS } from '../data/reference.js';
 import { optLabel } from '../data/questions.js';
 import { chances, effRegions, gaps } from '../lib/logic.js';
+import { findInCatalog } from '../data/catalog.js';
 
 export default function Result(){
   const { state, startTest, addApp, t, L, lang } = useApp();
@@ -14,9 +15,14 @@ export default function Result(){
   if (!p) return <Public hero={<section className="wrap hero"><NeedProfile textKey="needUnis" /></section>} />;
 
   const eng = p.english === 'none' ? t('result.noIelts') : t('result.ielts', optLabel('english', p.english, lang));
-  const summary = [t('result.grade', p.grade), eng, optLabel('grades', p.grades, lang), optLabel('budget', p.budget, lang), optLabel('field', p.field, lang)];
+  const sat = p.sat === 'nousa' ? null : (!p.sat || p.sat === 'none') ? t('result.noSat') : t('result.sat', optLabel('sat', p.sat, lang));
+  const summary = [t('result.grade', p.grade), eng, sat, optLabel('grades', p.grades, lang), optLabel('budget', p.budget, lang), optLabel('field', p.field, lang)].filter(Boolean);
   const isAdded = u => state.apps.some(a => a.name === u.n);
-  const onAdd = (u, basket) => addApp({name:u.n, kind:'uni', basket});
+  /* Deadline and website come from the catalog. */
+  const onAdd = (u, basket) => {
+    const c = findInCatalog(u.n);
+    addApp({name:u.n, kind:'uni', basket, deadline:c ? c.date : '', url:c ? c.url : '', approx:c ? c.approx : false});
+  };
 
   const hero = (
     <section className="wrap hero hero-sm">
