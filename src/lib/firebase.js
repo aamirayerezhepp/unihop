@@ -11,6 +11,8 @@ export function createCloud(config){
     onUser: cb => onAuthStateChanged(auth, cb),
     signIn: () => signInWithPopup(auth, new GoogleAuthProvider()),
     signOut: () => signOut(auth),
+    /* Short-lived proof of sign-in for the Қоян chat function. */
+    idToken: () => auth.currentUser ? auth.currentUser.getIdToken() : Promise.reject(new Error('signed-out')),
     /* One document per student: users/{uid}. Firestore rules let only that student read or write it. */
     load: async uid => { const s = await getDoc(doc(db, 'users', uid)); return s.exists() ? s.data() : null; },
     save: (uid, data) => setDoc(doc(db, 'users', uid), data)

@@ -1,12 +1,26 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { empty, loadLocal, saveLocal, migrate } from '../lib/storage.js';
 import { hasData, rulesText } from '../lib/logic.js';
-import { PRESETS } from '../data/reference.js';
 import { DOC_STATES } from '../data/docs.js';
 import { translate, pick } from '../i18n/strings.js';
 import { uid } from '../lib/dates.js';
+import { toProfile, freshAnswers } from '../data/questions.js';
 import { go } from '../hooks/useHashRoute.js';
 import { googleEnabled, loadCloud } from '../lib/account.js';
+import { KOYAN_URL, koyanStatus, askKoyan as askKoyanApi } from '../lib/koyanClient.js';
+import { evaluate } from '../lib/match.js';
+import { programById } from '../data/programs.js';
+
+/* Without the failed question at the end, so "Try again" doesn't repeat it. */
+const dropLastQuestion = (turns, text) => {
+  const i = turns.map(t => t.role === 'user' && t.content === text).lastIndexOf(true);
+  return i >= 0 ? turns.slice(0, i) : turns;
+};
+/* The site's own matching for the saved programmes, so Қоян explains the result rather than inventing one. */
+const matchSummary = st => !st.profile ? [] : st.apps.filter(a => a.programId && programById(a.programId)).slice(0, 5).map(a => {
+  const r = evaluate(programById(a.programId), st.profile);
+  return {id:a.programId, adm:r.adm.status, fund:r.fund.status, miss:[...r.adm.miss, ...r.fund.miss].map(x => x.ru), improve:[...r.adm.improve, ...r.fund.improve].map(x => x.ru)};
+});
 
 const Ctx = createContext(null);
 export const useApp = () => useContext(Ctx);
@@ -60,9 +74,14 @@ export function AppStateProvider({ children }){
   /* ---- Claude runtime: chat model + private storage. Absent outside an artifact viewer. ---- */
   const [sample, setSample] = useState(null);
   const [chatAvail, setChatAvail] = useState(null); // null = still checking
+  /* On the standalone site the chat goes through our Cloud Function (Kimi); "configured" is asked once. */
+  const webChat = !!KOYAN_URL && googleEnabled();
   useEffect(() => {
     const c = window.claude;
-    if (!c || typeof c.use !== 'function') { setChatAvail(false); return; }
+    if (!c || typeof c.use !== 'function') {
+      if (webChat) koyanStatus().then(setChatAvail); else setChatAvail(false);
+      return;
+    }
     c.use('sample').then(s => { setSample(() => s); setChatAvail(!!s); }).catch(() => setChatAvail(false));
     (async () => {
       try {
@@ -126,15 +145,15 @@ export function AppStateProvider({ children }){
 
   /* ---- chances test progress (shared by the landing page and #test) ---- */
   const [test, setTest] = useState(null);
-  const startTest = useCallback(prefill => setTest({step:0, a:clone(prefill || state.profile || {})}), [state.profile]);
+  const startTest = useCallback(prefill => setTest({key:null, a:clone(prefill || freshAnswers(state))}), [state]);
   const finishTest = useCallback(a => {
-    update(s => { s.profile = {grade:Number(a.grade), country:a.country, english:a.english, sat:a.sat || 'none', grades:a.grades, extra:a.extra, budget:a.budget, field:a.field, regions:a.regions || []}; });
+    update(s => { s.profile = toProfile(a); });
     setTest(null);
     go('result');
   }, [update]);
 
   /* ---- data actions ---- */
-  const toggleTask = useCallback(id => update(s => { if (s.done[id]) delete s.done[id]; else s.done[id] = true; }), [update]);
+  const toggleTask = useCallback((id, alias) => update(s => { if (s.done[id] || (alias && s.done[alias])) { delete s.done[id]; if (alias) delete s.done[alias]; } else s.done[id] = true; }), [update]);
   const cycleDoc = useCallback(id => update(s => {
     s.docs = s.docs || {};
     const cur = DOC_STATES.indexOf(s.docs[id] || 'todo');
@@ -144,31 +163,54 @@ export function AppStateProvider({ children }){
   const resetAll = useCallback(() => { setState(prev => empty(prev.lang)); setTest(null); }, []);
 
   /* ---- chat with Қоян (kept in memory only) ---- */
-  const [chat, setChat] = useState({turns:[], busy:false, errKey:''});
+  const [chat, setChat] = useState({turns:[], busy:false, errKey:'', retry:''});
   const chatRef = useRef(chat); chatRef.current = chat;
   const stateRef = useRef(state); stateRef.current = state;
-  const ctlRef = useRef(null);
+  const ctlRef = useRef(null), focusRef = useRef([]);
 
-  const sendChat = useCallback(async raw => {
+  const sendChat = useCallback(async (raw, {retry = false} = {}) => {
     const text = (raw || '').trim();
-    if (!text || chatRef.current.busy) return;
-    const preset = PRESETS.find(x => x.q.ru === text || x.q.kz === text || x.q.en === text);
+    if (!text || chatRef.current.busy || !chatAvail) return;
+    // A retry replaces the failed question instead of adding it twice.
+    const base = retry ? dropLastQuestion(chatRef.current.turns, text) : chatRef.current.turns;
     const userTurn = {id:uid(), role:'user', content:text};
-    if (!sample || chatAvail === false) {
-      const reply = preset
-        ? {id:uid(), role:'assistant', preset, local:true}
-        : {id:uid(), role:'assistant', msgKey:'chat.unavailable', local:true};
-      setChat(c => ({...c, errKey:'', turns:[...c.turns, userTurn, reply]}));
-      return;
-    }
     const pid = uid();
-    let hist = [...chatRef.current.turns, userTurn].filter(t => !t.pending && !t.local && t.content).slice(-16);
+    let hist = [...base, userTurn].filter(t => !t.pending && !t.local && t.content).slice(-16);
     while (hist.length && hist[0].role !== 'user') hist.shift();
-    const input = [{role:'user', content:rulesText(stateRef.current)}, ...hist.map(t => ({role:t.role, content:t.content}))];
     chatRef.current = {...chatRef.current, busy:true};
-    setChat(c => ({...c, errKey:'', busy:true, turns:[...c.turns, userTurn, {id:pid, role:'assistant', content:'', pending:true}]}));
+    setChat(c => ({...c, errKey:'', retry:'', busy:true, turns:[...base, userTurn, {id:pid, role:'assistant', content:'', pending:true}]}));
     const patch = p => setChat(c => ({...c, turns:c.turns.map(t => t.id === pid ? {...t, ...p} : t)}));
     const ctl = new AbortController(); ctlRef.current = ctl;
+
+    if (!sample) {
+      /* standalone site: our server function -> Kimi */
+      let acc = '';
+      try {
+        const token = await gcloud.current.idToken();
+        const st = stateRef.current;
+        const payload = {lang:st.lang || 'ru', profile:st.profile, apps:st.apps.map(a => ({name:a.name, programId:a.programId || null, deadline:a.deadline || ''})),
+          matches:matchSummary(st), focus:focusRef.current, messages:hist.map(t => ({role:t.role, content:t.content}))};
+        focusRef.current = [];
+        const r = await askKoyanApi({token, payload, signal:ctl.signal, onDelta:d => { acc += d; patch({content:acc}); }});
+        patch({content:acc, pending:false, sources:r.sources, noteKey:r.truncated ? 'chat.truncated' : ''});
+      } catch (e) {
+        const code = (e && e.code) || 'net';
+        if (code === 'cancelled') {
+          if (acc) patch({pending:false, noteKey:'chat.stopped'}); else setChat(c => ({...c, turns:c.turns.filter(t => t.id !== pid)}));
+        } else {
+          if (code === 'not_configured') setChatAvail(false);
+          const errKey = 'chat.err.' + (['budget', 'limit', 'busy', 'balance', 'unavailable', 'net', 'concurrent', 'input', 'auth', 'filter'].includes(code) ? code : 'unavailable');
+          setChat(c => ({...c, errKey, retry:['input', 'filter', 'budget', 'limit', 'balance'].includes(code) ? '' : text,
+            turns:acc ? c.turns.map(t => t.id === pid ? {...t, pending:false, noteKey:'chat.cut'} : t) : c.turns.filter(t => t.id !== pid)}));
+        }
+      } finally {
+        ctlRef.current = null;
+        setChat(c => ({...c, busy:false}));
+      }
+      return;
+    }
+
+    const input = [{role:'user', content:rulesText(stateRef.current)}, ...hist.map(t => ({role:t.role, content:t.content}))];
     try {
       const r = await sample(input, {cache:false, signal:ctl.signal, onText:({text}) => patch({content:text})});
       patch({content:r.text, pending:false, noteKey:r.truncated ? 'chat.truncated' : ''});
@@ -176,18 +218,21 @@ export function AppStateProvider({ children }){
       const code = e && e.code;
       let content = (e && e.text) || '', errKey = '', extra = {};
       if (code === 'cancelled') { /* keep what was written */ }
-      else if (CHAT_OFF.includes(code)) { setChatAvail(false); content = ''; if (preset) { extra = {preset, local:true}; content = ' '; } }
+      else if (CHAT_OFF.includes(code)) { setChatAvail(false); content = ''; }
       else if (code === 'refused') { content = ''; errKey = 'chat.refused'; }
       else if (code === 'rate_limited') errKey = 'chat.rate';
       else if (code === 'session_expired') errKey = 'chat.session';
       else { errKey = 'chat.net'; if (content) extra.noteKey = 'chat.cut'; }
-      setChat(c => ({...c, errKey, turns:content ? c.turns.map(t => t.id === pid ? {...t, ...extra, content:extra.preset ? '' : content, pending:false} : t) : c.turns.filter(t => t.id !== pid)}));
+      setChat(c => ({...c, errKey, retry:errKey && errKey !== 'chat.refused' ? text : '', turns:content ? c.turns.map(t => t.id === pid ? {...t, ...extra, content, pending:false} : t) : c.turns.filter(t => t.id !== pid)}));
     } finally {
       ctlRef.current = null;
       setChat(c => ({...c, busy:false}));
     }
   }, [sample, chatAvail]);
   const stopChat = useCallback(() => { if (ctlRef.current) ctlRef.current.abort(); }, []);
+  /* "Ask Қоян" buttons elsewhere put a ready question into the chat box (and tell the server which programme it is about). */
+  const [chatDraft, setChatDraft] = useState('');
+  const askKoyan = useCallback((text, programId) => { setChatDraft(text); focusRef.current = programId ? [programId] : []; go('koyan'); }, []);
 
   const mode = account.status === 'signedIn' ? 'google' : cloudOn ? 'cloud' : hasData(state) && localOK ? 'local' : 'none';
 
@@ -195,9 +240,9 @@ export function AppStateProvider({ children }){
     state, update, mode, lang, t, L, setLang,
     toggleTask, cycleDoc, addApp, resetAll,
     test, setTest, startTest, finishTest,
-    chat, chatAvail, sendChat, stopChat,
+    chat, chatAvail, sendChat, stopChat, chatDraft, setChatDraft, askKoyan,
     account, signInGoogle, signOutGoogle
-  }), [state, update, mode, lang, t, L, setLang, toggleTask, cycleDoc, addApp, resetAll, test, startTest, finishTest, chat, chatAvail, sendChat, stopChat, account, signInGoogle, signOutGoogle]);
+  }), [state, update, mode, lang, t, L, setLang, toggleTask, cycleDoc, addApp, resetAll, test, startTest, finishTest, chat, chatAvail, sendChat, stopChat, chatDraft, askKoyan, account, signInGoogle, signOutGoogle]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

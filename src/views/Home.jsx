@@ -3,16 +3,10 @@ import { useApp } from '../state/AppState.jsx';
 import { Public, Cabinet, PageHead } from '../components/Shell.jsx';
 import Koyan from '../components/Koyan.jsx';
 import TestCard from '../components/TestCard.jsx';
-import ResultCards from '../components/ResultCards.jsx';
 import { BASKETS, PRESETS, STATUSES, CHECKS } from '../data/reference.js';
-import { buildPlan, docsFor, fittingGrants, upcoming } from '../lib/logic.js';
+import { buildPlan, docsFor, fittingGrants, upcoming, isDone } from '../lib/logic.js';
+import { planFocus } from '../lib/plan.js';
 import { daysLeft, daysWord, fmtDate, fmtShort } from '../lib/dates.js';
-
-const EXAMPLE = {
-  dream:[{n:'University of Toronto', c:'ca'}, {n:'KAIST', c:'kr'}],
-  real:[{n:'TU München', c:'de'}, {n:'University of Manchester', c:'uk'}],
-  safe:[{n:'Charles University', c:'cz'}, {n:'BME', c:'hu'}]
-};
 
 export default function Home(){
   const { state } = useApp();
@@ -40,8 +34,11 @@ function Landing(){
           <div className="row" style={{gap:16}}><Koyan pose="graduate" size={88} /><h2>{t('land.resultH')}</h2></div>
           <span className="tag dash">{t('example')}</span>
         </div>
-        <ResultCards r={EXAMPLE} example />
-        <div className="soft gaps"><b>{t('gaps.title')}</b><span>{t('gap.ielts7')}</span><span>{t('gap.extra')}</span><span>{t('gap.sat')}</span></div>
+        <div className="card pcard" style={{maxWidth:640}}>
+          <p className="small muted">Eötvös Loránd University (ELTE) · Budapest</p>
+          <h3>Psychology BA</h3>
+          <ul className="bullets" style={{fontSize:15}}>{['land.ex1', 'land.ex2', 'land.ex3'].map(k => <li key={k}>{t(k)}</li>)}</ul>
+        </div>
       </section>
 
       <section className="assist">
@@ -71,16 +68,17 @@ function Landing(){
 function Dashboard(){
   const { state, t, L, lang, toggleTask } = useApp();
   const [justDone, setJustDone] = useState([]);
-  const p = state.profile, plan = buildPlan(p);
-  const doneN = plan.filter(x => state.done[x.id]).length, pct = plan.length ? Math.round(doneN / plan.length * 100) : 0;
+  const p = state.profile, plan = buildPlan(state).filter(x => !x.info);
+  const doneN = plan.filter(x => isDone(state, x)).length, pct = plan.length ? Math.round(doneN / plan.length * 100) : 0;
   const up = upcoming(state), docs = docsFor(state);
   const nearest = up[0], nd = nearest ? daysLeft(nearest.date) : null;
   let sub = nearest ? (nd === 0 ? t('dash.nearestToday') : t('dash.nearest', daysWord(nd, lang))) : t('dash.noDeadlines');
   if (nearest && nd <= 30 && docs.done < docs.total) sub += t('dash.missing', docs.total - docs.done);
   const baskets = k => state.apps.filter(a => a.basket === k).length;
-  const week = plan.filter(x => !state.done[x.id] || justDone.includes(x.id)).slice(0, 4);
-  const tip = week.some(x => x.id === 'recs') ? t('dash.tipRecs') : t('dash.tip');
-  const tick = id => { if (!justDone.includes(id)) setJustDone([...justDone, id]); toggleTask(id); };
+  const focus = planFocus(state, plan);
+  const week = plan.filter(x => !x.missed && (!isDone(state, x) || justDone.includes(x.id))).slice(0, 4);
+  const tip = week.some(x => /recs/.test(x.id)) ? t('dash.tipRecs') : t('dash.tip');
+  const tick = x => { if (!justDone.includes(x.id)) setJustDone([...justDone, x.id]); toggleTask(x.id, x.alias); };
 
   return (
     <Cabinet>
@@ -111,8 +109,8 @@ function Dashboard(){
           <div className="card-h"><h2>{t('dash.week')}</h2></div>
           {week.length ? week.map(x => (
             <label key={x.id} className="checkrow">
-              <input type="checkbox" checked={!!state.done[x.id]} onChange={() => tick(x.id)} />
-              <span className={state.done[x.id] ? 'struck' : ''}>{L(x.title)}</span>
+              <input type="checkbox" checked={isDone(state, x)} onChange={() => tick(x)} />
+              <span className={isDone(state, x) ? 'struck' : ''}>{L(x.title)}{x === focus.main && !isDone(state, x) ? <b className="blue"> · {t('plan.main')}</b> : null}</span>
             </label>
           )) : <p className="muted">{t('dash.weekDone')}</p>}
           <div className="hint-row push"><Koyan pose="question" size={52} /><div className="bubble small">{tip}</div></div>

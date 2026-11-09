@@ -9,7 +9,8 @@ export const COUNTRIES = {
 export const REGIONS = {
   us:{label:g('США','АҚШ','USA'), code:'US'}, uk:{label:g('Великобритания','Ұлыбритания','United Kingdom'), code:'UK'},
   eu:{label:g('Европа','Еуропа','Europe'), code:'EU'}, ca:{label:g('Канада','Канада','Canada'), code:'CA'},
-  asia:{label:g('Корея, Япония, Китай','Корея, Жапония, Қытай','Korea, Japan, China'), code:'AS'}, tr:{label:g('Турция','Түркия','Turkey'), code:'TR'}
+  asia:{label:g('Корея, Япония, Китай','Корея, Жапония, Қытай','Korea, Japan, China'), code:'AS'}, tr:{label:g('Турция','Түркия','Turkey'), code:'TR'},
+  kz:{label:g('Казахстан','Қазақстан','Kazakhstan'), code:'KZ'}
 };
 
 /* Country names for the university lists (code → name). */

@@ -1,4 +1,5 @@
 import { EN } from './en.js';
+import { V2 } from './v2.js';
 /* Interface text in Russian (ru) and Kazakh (kz). A value is a string or a function of its arguments.
    A key missing in kz falls back to ru. Content data (test, plan, grants, documents) carries its own {ru, kz}. */
 export const STRINGS = {
@@ -278,6 +279,7 @@ export const STRINGS = {
 };
 
 STRINGS.en = EN;
+for (const l of ['ru', 'kz', 'en']) Object.assign(STRINGS[l], V2[l]);
 
 export function translate(lang, key, ...args){
   const v = (STRINGS[lang] && STRINGS[lang][key]) ?? STRINGS.ru[key];

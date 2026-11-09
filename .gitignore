@@ -5,3 +5,5 @@ artifact
 .firebase
 .claude
 *.log
+functions/.env
+functions/kb.json

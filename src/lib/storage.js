@@ -1,15 +1,18 @@
+import { upgradeProfile } from '../data/questions.js';
+
 /* Browser copy of the student's data. The same shape is mirrored to the artifact's private db when available. */
 const LS_KEY = 'orientir-state-v1';
 
 const guessLang = () => {
   try { const l = navigator.language || ''; return /^kk/i.test(l) ? 'kz' : /^en/i.test(l) ? 'en' : 'ru'; } catch (e) { return 'ru'; }
 };
-export const empty = (lang = guessLang()) => ({v:3, lang, name:'', profile:null, done:{}, apps:[], checkins:[], docs:{}});
+export const empty = (lang = guessLang()) => ({v:4, lang, name:'', profile:null, done:{}, apps:[], checkins:[], docs:{}});
 
 /* Accepts saved data from any earlier version; returns null when it can't be used. */
 export function migrate(o){
   if (!o || !Array.isArray(o.apps) || !Array.isArray(o.checkins)) return null;
-  if (o.v === 3) return o;
+  if (o.v === 4) return o;
+  if (o.v === 3) return {...o, v:4, profile:upgradeProfile(o.profile)};
   if (o.v === 1) {
     if (o.demo) return null;
     const p = o.profile || {};
@@ -18,7 +21,7 @@ export function migrate(o){
     o = {v:2, profile:{grade:p.grade, country:p.country, english, grades:p.grades, extra:'none', budget:p.budget, field:fmap[(p.interests || [])[0]] || 'unsure', regions:p.regions || []},
       done:o.done || {}, apps:o.apps, checkins:o.checkins};
   }
-  if (o.v === 2) return {...empty(), ...o, v:3, docs:o.docs || {}, name:o.name || ''};
+  if (o.v === 2) return {...empty(), ...o, v:4, profile:upgradeProfile(o.profile), docs:o.docs || {}, name:o.name || ''};
   return null;
 }
 

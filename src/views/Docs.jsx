@@ -3,9 +3,8 @@ import { useApp } from '../state/AppState.jsx';
 import { go } from '../hooks/useHashRoute.js';
 import { Cabinet, PageHead } from '../components/Shell.jsx';
 import { AccountLine } from '../components/Account.jsx';
-import { COUNTRIES, REGIONS } from '../data/reference.js';
-import { optLabel } from '../data/questions.js';
-import { docsFor, effRegions } from '../lib/logic.js';
+import { profileFacts } from '../data/questions.js';
+import { docsFor } from '../lib/logic.js';
 
 /* "Кабинет · Документы и профиль": a status checklist (no file uploads) plus the test answers. */
 export default function Docs(){
@@ -14,12 +13,7 @@ export default function Docs(){
   const docs = docsFor(state), p = state.profile;
   const label = st => t('docs.' + st);
 
-  const facts = p ? [
-    ['pf.grade', t('result.grade', p.grade)], ['pf.country', L(COUNTRIES[p.country])], ['pf.english', optLabel('english', p.english, lang)],
-    ['pf.sat', optLabel('sat', p.sat || 'none', lang)],
-    ['pf.grades', optLabel('grades', p.grades, lang)], ['pf.extra', optLabel('extra', p.extra, lang)], ['pf.budget', optLabel('budget', p.budget, lang)],
-    ['pf.field', optLabel('field', p.field, lang)], ['pf.regions', effRegions(p).map(r => L(REGIONS[r].label)).join(', ')]
-  ] : [];
+  const facts = profileFacts(p, lang);
 
   return (
     <Cabinet>

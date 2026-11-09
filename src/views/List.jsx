@@ -4,6 +4,8 @@ import { Cabinet, PageHead } from '../components/Shell.jsx';
 import { BASKETS, CHECKS, STATUSES } from '../data/reference.js';
 import { daysLeft, daysWord, fmtDate } from '../lib/dates.js';
 import CatalogCombo from '../components/CatalogCombo.jsx';
+import { ProgramDetails } from '../components/ProgramCard.jsx';
+import { programById } from '../data/programs.js';
 
 const EMPTY_FORM = {name:'', kind:'uni', basket:'', deadline:'', url:'', approx:false, from:''};
 
@@ -51,6 +53,7 @@ export default function List(){
                   : t('apps.noDeadline')}</p>
                 {(a.noteKey || a.note || a.approx) && <p className="small muted">{a.noteKey ? t(a.noteKey) : a.note || t('cat.approxNote')}</p>}
                 {a.url && <a className="small bold" href={a.url} target="_blank" rel="noopener">{t('apps.site')}</a>}
+                {a.programId && programById(a.programId) && <details className="progdet"><summary className="small bold">{t('apps.progDetails')}</summary><ProgramDetails pr={programById(a.programId)} /></details>}
               </div>
               <label className="small bold field-inline">{t('apps.status')}
                 <select className="select" value={a.status} onChange={e => edit(a.id, x => { x.status = e.target.value; })}>

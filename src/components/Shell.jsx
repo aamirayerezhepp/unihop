@@ -1,6 +1,6 @@
 import { useApp } from '../state/AppState.jsx';
 import { useRoute } from '../hooks/useHashRoute.js';
-import { alerts, buildPlan, docsFor, fittingGrants } from '../lib/logic.js';
+import { alerts, buildPlan, isDone, docsFor, fittingGrants } from '../lib/logic.js';
 import Koyan from './Koyan.jsx';
 import Logo from './Logo.jsx';
 import { GoogleButton, AccountLine } from './Account.jsx';
@@ -68,7 +68,7 @@ export function Cabinet({ children }){
   const view = useRoute();
   const { state, mode, t } = useApp();
   const docs = docsFor(state);
-  const left = state.profile ? buildPlan(state.profile).filter(x => !state.done[x.id]).length : null;
+  const left = state.profile ? buildPlan(state).filter(x => !isDone(state, x) && !x.info).length : null;
   const nAlerts = alerts(state).length;
   const items = [
     ['home', t('nav.home')], ['plan', t('nav.plan'), left], ['list', t('nav.list'), state.apps.length || null],
