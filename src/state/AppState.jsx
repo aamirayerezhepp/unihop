@@ -74,7 +74,7 @@ export function AppStateProvider({ children }){
   /* ---- Claude runtime: chat model + private storage. Absent outside an artifact viewer. ---- */
   const [sample, setSample] = useState(null);
   const [chatAvail, setChatAvail] = useState(null); // null = still checking
-  /* On the standalone site the chat goes through our Cloud Function (Kimi); "configured" is asked once. */
+  /* On the standalone site the chat goes through our server on Render (Kimi); "configured" is asked once, which also wakes the server. */
   const webChat = !!KOYAN_URL && googleEnabled();
   useEffect(() => {
     const c = window.claude;

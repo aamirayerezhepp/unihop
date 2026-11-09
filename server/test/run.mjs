@@ -1,4 +1,4 @@
-// Tests for the Қоян function without Firebase or a real Kimi key: node functions/test/run.mjs
+// Tests for the Қоян server without Firebase or a real Kimi key: node server/test/run.mjs
 // (run `node scripts/build-kb.mjs` first). A fake Kimi server streams answers, tool calls and errors.
 import { readFileSync } from 'node:fs';
 import { createKoyan } from '../src/core.js';

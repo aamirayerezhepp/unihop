@@ -1,5 +1,5 @@
-// Snapshot of the verified data for the Қоян server function: node scripts/build-kb.mjs -> functions/kb.json
-// Runs automatically before `firebase deploy --only functions` (see firebase.json predeploy).
+// Snapshot of the verified data for the Қоян server function: node scripts/build-kb.mjs -> server/kb.json
+// Runs in the Render build (see render.yaml).
 import { writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { PROGRAMS, LANGS } from '../src/data/programs.js';
@@ -25,6 +25,6 @@ const kb = {
     langs:Object.fromEntries(Object.entries(LANGS).map(([k, v]) => [k, {ru:ru(v), all:all(v)}]))
   }
 };
-const out = fileURLToPath(new URL('../functions/kb.json', import.meta.url));
+const out = fileURLToPath(new URL('../server/kb.json', import.meta.url));
 writeFileSync(out, JSON.stringify(kb));
 console.log(`kb.json: ${kb.programs.length} programmes, ${kb.grants.length} scholarships, ${kb.catalog.length} catalogue rows, ${kb.facts.length} facts`);

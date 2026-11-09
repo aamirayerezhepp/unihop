@@ -1,67 +1,64 @@
-# Қоян live chat: setup
+# Қоян live chat: setup (Render, free)
 
-Қоян answers through a Firebase Cloud Function (`functions/`). The browser never sees the Kimi key:
-browser → our function (checks sign-in, limits and spending caps, picks the relevant facts from the verified database) → Kimi API → streamed answer.
+Firebase stays on the free **Spark** plan (Hosting + Firestore). Қоян's server runs separately on **Render's free plan**:
 
-Until these steps are done, the site shows «Чат временно недоступен» and a FAQ with checked answers.
-
-## 1. Kimi account (pay-as-you-go API)
-1. Sign in at https://platform.kimi.ai and top up the balance (K3.1 Pro unlocks after a top-up; the minimum is $1).
-2. Create an API key. Keep it to yourself — don't paste it into chats, code or commits.
-3. In the model list, check that `kimi-k3.1-pro` is available to your account. If you want another model, set `KIMI_MODEL` (step 4).
-
-## 2. Firebase Blaze plan
-Cloud Functions and Secret Manager need the pay-as-you-go **Blaze** plan:
-Firebase console → project `unihop-88ba6` → Upgrade. Set a budget alert in Google Cloud Billing.
-
-## 3. Put the key into Secret Manager (from your own terminal)
 ```
-firebase functions:secrets:set KIMI_API_KEY --project unihop-88ba6
+site (Firebase Hosting)  →  server/ on Render  →  Kimi API
+  no keys                     key in Render's        kimi-k3.1-pro
+  Google sign-in token        environment only
 ```
-Paste the key when asked. It is stored encrypted, only the function can read it, and it never appears in logs.
 
-## 4. Optional settings
-Copy `functions/.env.example` to `functions/.env` and change what you need (all optional):
-model, API address, message limits per day, concurrency, history and answer length, daily and monthly token caps,
-and an optional monthly dollar cap (copy current prices from the Kimi price page — they are not hard-coded).
-`KOYAN_ENABLED=false` switches the chat off without redeploying the site.
+The server checks the site address, Google sign-in, message length and limits, sends Kimi only the relevant
+pieces of the verified database, and streams the answer back. Message text is never logged.
 
-## 5. Deploy the function
-```
-npm --prefix functions install
-firebase deploy --only functions --project unihop-88ba6
-```
-The data snapshot `functions/kb.json` is rebuilt automatically before each deploy (`scripts/build-kb.mjs`).
-The function URL is printed at the end, e.g. `https://europe-west1-unihop-88ba6.cloudfunctions.net/koyan`.
+Until the steps below are done, the site shows «Чат временно недоступен» and the FAQ.
 
-## 6. Point the site at the function
-Add the URL to `.env.local`:
+## Cost and limits
+- **Firebase:** stays on the free Spark plan.
+- **Render free web service:** $0, 750 instance hours a month per workspace. It **sleeps after 15 idle minutes**, and the first request after that takes up to about a minute; the site shows «Қоян просыпается…».
+- **Kimi:** pay-as-you-go. Review sites list kimi-k3.1-pro at about $2 / 1M input and $10 / 1M output tokens; check the official price page. That is roughly $0.02–0.04 per answer.
+- **Default caps:** 30 messages a day per student, 60 per network address, one request at a time. Spending stops at 1M tokens a day or 10M a month (about $5 a day or $40 a month at those prices).
+
+## 1. Kimi key
+1. At https://platform.kimi.ai, top up the balance (minimum $1) and create a **new** API key.
+2. Delete any key that was ever pasted into a chat or a file in the repository.
+
+## 2. Local test with the real key (optional, recommended)
+1. Open `server/.env` (git-ignored) in your editor and put the key after `KIMI_API_KEY=`. Save.
+2. Run `node server/test/live.mjs`. It asks 30 questions in RU/KZ/EN and writes `server/test/live-report.md`.
+
+## 3. Firestore access for limits (recommended)
+Without it, limits live in memory and reset each time the free service sleeps.
+1. Google Cloud console → IAM & Admin → Service accounts (project `unihop-88ba6`) → **Create service account**, e.g. `koyan-limits`.
+2. Give it the single role **Cloud Datastore User**.
+3. Open it → Keys → **Add key → JSON**. A file downloads. Keep it private.
+
+## 4. Render
+1. Sign up at https://render.com (free) and connect your GitHub account.
+2. **New → Blueprint**, pick the `unihop` repository. Render reads `render.yaml` and creates the `unihop-koyan` web service on the free plan.
+3. When asked for secret values:
+   - `KIMI_API_KEY`: the Kimi key.
+   - `FIREBASE_SERVICE_ACCOUNT`: the whole content of the JSON file from step 3 (paste it as is).
+4. Wait for the deploy. Open `https://<your-service>.onrender.com/health`. It should show `"configured":true` and `"limits":"firestore"`.
+
+All other settings (model, limits, caps, optional dollar cap) are listed in `server/.env.example` and can be changed in Render → Environment.
+
+## 5. Connect the site
+Add the service address to `.env.local`:
 ```
-VITE_KOYAN_URL=https://europe-west1-unihop-88ba6.cloudfunctions.net/koyan
+VITE_KOYAN_URL=https://<your-service>.onrender.com
 ```
-then rebuild and deploy the site:
+Then rebuild and publish the site:
 ```
 npm run build
 firebase deploy --only hosting --project unihop-88ba6
 ```
 
-## 7. Check it
-- Open the URL in a browser: `{"configured":true}` means the key and settings are in place.
-- Sign in with Google on the site, open «Чат с Қояном», and ask a question. Only after a real answer arrives is the integration confirmed.
-
-## How costs are limited
-- Only signed-in Google users can call the chat; requests from other sites are refused.
-- Per student: 30 messages a day and one request at a time; per network address: 60 a day (all configurable).
-- Input up to 1,200 characters, the last 8 turns of history (up to 8,000 characters), answers up to 2,500 tokens including reasoning; `reasoning_effort: low`.
-- Only the relevant fragments of the database are sent, not the whole database; at most 2 database searches and 1 retry per answer.
-- Daily and monthly token caps (and an optional dollar cap) stop new requests when reached; usage is counted in Firestore (`koyan_usage`).
-- Logs contain only counters and error codes, never message text.
-
 ## Tests without a key
 ```
 node scripts/build-kb.mjs
-node functions/test/run.mjs          # 34 checks: search, limits, errors, tools, streaming (fake Kimi)
-node functions/test/mock-server.mjs  # local endpoint with a fake Kimi on http://localhost:8787
-node scripts/check-match.mjs         # matching for the reference profile
-node scripts/check-plan.mjs          # plan for the reference profile
+node server/test/run.mjs   # 34 checks: search for 30 questions, limits, errors, tools, streaming (fake Kimi)
+node server/test/e2e.mjs   # 11 checks of the real server over HTTP with a fake Kimi
+node scripts/check-match.mjs
+node scripts/check-plan.mjs
 ```

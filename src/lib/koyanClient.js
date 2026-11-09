@@ -1,16 +1,19 @@
-/* Browser side of the Қоян chat on the standalone site: talks to our Cloud Function, never to Kimi directly.
+/* Browser side of the Қоян chat on the standalone site: talks to our server (server/, on Render), never to Kimi directly.
    The function address comes from VITE_KOYAN_URL; there is no API key in the browser. */
 export const KOYAN_URL = import.meta.env.VITE_KOYAN_URL || '';
 
-/* Is the chat configured on the server? Any failure counts as "not available". */
-export async function koyanStatus(){
+/* Is the chat configured on the server? Any failure counts as "not available".
+   A free Render service sleeps after 15 idle minutes and needs up to about a minute to wake, so wait that long. */
+export async function koyanStatus(timeoutMs = 75000){
   if (!KOYAN_URL) return false;
+  const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), timeoutMs);
   try {
-    const r = await fetch(KOYAN_URL, {method:'GET'});
+    const r = await fetch(KOYAN_URL, {method:'GET', signal:ctl.signal});
     if (!r.ok) return false;
     const j = await r.json();
     return !!j.configured;
   } catch (e) { return false; }
+  finally { clearTimeout(timer); }
 }
 
 /* Sends the conversation; calls onDelta(text) for each streamed piece. Resolves {sources, truncated};

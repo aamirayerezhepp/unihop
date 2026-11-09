@@ -2,6 +2,7 @@
    Merged over the base dictionaries in strings.js, so a key here replaces the old text. */
 export const V2 = {
   ru:{
+    'chat.waking':'Қоян просыпается — после паузы первый ответ может занять до минуты.', 
     'dash.listEmpty':'Список пуст. Сохрани программы из подбора.', 'list.fromChances':'Открыть подбор программ', 'apps.empty':'В списке пока пусто. Сохрани программу из подбора, добавь вуз ниже или стипендию.', 'dash.myChances':'Мой подбор', 'needUnis':'Чтобы подобрать программы, мне нужно знать о тебе чуть больше. Тест займёт 3–4 минуты.', 'apps.progDetails':'Требования и сроки',
     'land.h1':'Какие вузы тебе подходят?',
     'land.lead':'Ответь на 10–12 коротких вопросов. Покажем программы, которые подходят по требованиям и по деньгам, и что проверить до подачи.',
@@ -59,6 +60,7 @@ export const V2 = {
     'tile.listSub':(a, b, c) => `${a + b + c} в списке`
   },
   kz:{
+    'chat.waking':'Қоян оянып жатыр — үзілістен кейін алғашқы жауапқа бір минутқа дейін кетуі мүмкін.', 
     'dash.listEmpty':'Тізім бос. Іріктеуден бағдарламаларды сақта.', 'list.fromChances':'Бағдарламалар іріктеуін ашу', 'apps.empty':'Тізім әзірге бос. Іріктеуден бағдарламаны сақта, төменде ЖОО немесе стипендия қос.', 'dash.myChances':'Менің іріктеуім', 'needUnis':'Бағдарламаларды іріктеу үшін сен туралы көбірек білуім керек. Тест 3–4 минут алады.', 'apps.progDetails':'Талаптар мен мерзімдер',
     'land.h1':'Саған қай ЖОО-лар сай келеді?',
     'land.lead':'10–12 қысқа сұраққа жауап бер. Талаптар мен қаржы бойынша сай келетін бағдарламаларды және өтінішке дейін нені тексеру керегін көрсетеміз.',
@@ -116,6 +118,7 @@ export const V2 = {
     'tile.listSub':(a, b, c) => `Тізімде ${a + b + c}`
   },
   en:{
+    'chat.waking':'Qoyan is waking up — after a pause the first answer can take up to a minute.', 
     'dash.listEmpty':'Your list is empty. Save programmes from your matches.', 'list.fromChances':'Open programme matches', 'apps.empty':'Your list is empty. Save a programme from your matches, or add a university or scholarship below.', 'dash.myChances':'My matches', 'needUnis':'To match programmes I need to know a bit more about you. The test takes 3–4 minutes.', 'apps.progDetails':'Requirements and deadlines',
     'land.h1':'Which universities fit you?',
     'land.lead':'Answer 10–12 short questions. We\'ll show programmes that fit your requirements and your budget, and what to check before you apply.',

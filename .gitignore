@@ -5,5 +5,7 @@ artifact
 .firebase
 .claude
 *.log
-functions/.env
-functions/kb.json
+server/.env
+server/.dev-token
+server/kb.json
+server/test/live-report.md

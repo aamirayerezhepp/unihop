@@ -1,4 +1,4 @@
-// Local Қоян endpoint with a fake Kimi, for testing the site's chat client: node functions/test/mock-server.mjs
+// Local Қоян endpoint with a fake Kimi, for testing the site's chat client: node server/test/mock-server.mjs
 // Token "dev" counts as a Google sign-in. Questions containing "ошибка-баланс" / "ошибка-сеть" simulate failures.
 import http from 'node:http';
 import { readFileSync } from 'node:fs';

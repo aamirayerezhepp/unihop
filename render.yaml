@@ -1,0 +1,29 @@
+# Render Blueprint for the Қоян chat server (free plan). Secrets marked `sync: false` are entered in the
+# Render dashboard when the Blueprint is created — never in this file.
+services:
+  - type: web
+    name: unihop-koyan
+    runtime: node
+    plan: free
+    region: frankfurt
+    buildCommand: npm install --prefix server --omit=dev && node scripts/build-kb.mjs
+    startCommand: node server/index.js
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: KIMI_API_KEY
+        sync: false
+      - key: FIREBASE_SERVICE_ACCOUNT
+        sync: false
+      - key: FIREBASE_PROJECT_ID
+        value: unihop-88ba6
+      - key: KIMI_MODEL
+        value: kimi-k3.1-pro
+      - key: KIMI_BASE_URL
+        value: https://api.moonshot.ai/v1
+      - key: KOYAN_ALLOWED_ORIGINS
+        value: https://unihop-88ba6.web.app,https://unihop-88ba6.firebaseapp.com
+      - key: KOYAN_HASH_SALT
+        generateValue: true

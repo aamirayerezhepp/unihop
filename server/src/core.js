@@ -20,7 +20,7 @@ export const DEFAULTS = {
   maxInputChars:1200, maxAssistantChars:2000, historyTurns:8, historyChars:8000, maxOutputTokens:2500,
   maxToolRounds:2, maxRetries:1, toolResultChars:6000,
   userDaily:30, ipDaily:60, maxConcurrent:1, lockMs:120000,
-  dailyTokenCap:3000000, monthlyTokenCap:40000000, priceInPerM:0, priceOutPerM:0, monthlyUsdCap:0, salt:'unihop'
+  dailyTokenCap:1000000, monthlyTokenCap:10000000, priceInPerM:0, priceOutPerM:0, monthlyUsdCap:0, salt:'unihop'
 };
 
 const sha = s => createHash('sha256').update(s).digest('hex').slice(0, 20);
@@ -86,7 +86,9 @@ export function createKoyan(config, deps){
     const send = o => res.write(`data: ${JSON.stringify(o)}\n\n`);
     const ctl = new AbortController();
     let finished = false;
-    if (req.on) req.on('close', () => { if (!finished) ctl.abort(); });
+    // The browser went away (tab closed or "Stop"): stop paying for the rest of the answer.
+    // Watch the response, not the request — Node closes the request as soon as its body has been read.
+    if (res.on) res.on('close', () => { if (!finished) ctl.abort(); });
 
     const usage = {in:0, out:0};
     let answer = '', rounds = 0, tools = 0, code = null;

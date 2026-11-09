@@ -73,7 +73,11 @@ export default function Chat(){
           </form>
         </div>
       )}
-      {chatAvail === null && <p className="muted">{t('chat.thinking')}</p>}
+      {chatAvail === null && (
+        <section className="card" role="status">
+          <div className="row" style={{flexWrap:'nowrap', gap:12}}><Koyan pose="idle" size={48} /><p className="muted">{inClaude ? t('chat.thinking') : t('chat.waking')}</p></div>
+        </section>
+      )}
       {live && <p className="small muted">{inClaude ? t('chat.privacyArtifact') : t('chat.privacy')} {t('chat.foot')}</p>}
 
       <section className="card">
