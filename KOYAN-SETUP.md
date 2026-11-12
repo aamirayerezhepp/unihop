@@ -41,7 +41,15 @@ Without it, limits live in memory and reset each time the free service sleeps.
    - `FIREBASE_SERVICE_ACCOUNT`: the whole content of the JSON file from step 3 (paste it as is).
 4. Wait for the deploy. Open `https://<your-service>.onrender.com/health`. It should show `"configured":true` and `"limits":"firestore"`.
 
-All other settings (model, limits, caps, optional dollar cap) are listed in `server/.env.example` and can be changed in Render → Environment.
+If you create the service by hand (**New → Web Service**) instead of the Blueprint, use:
+- Language **Node**, Branch `main`, **Root Directory empty**, Instance type **Free**
+- Build Command `npm install`, Start Command `npm start`
+- Health Check Path `/health`
+- Environment: `KIMI_API_KEY` (and optionally `FIREBASE_SERVICE_ACCOUNT`), plus
+  `KOYAN_ALLOWED_ORIGINS=https://unihop-88ba6.web.app,https://unihop-88ba6.firebaseapp.com`
+
+Node 22 is picked from `.node-version`. All other settings (model, limits, caps, optional dollar cap) are listed in
+`server/.env.example` and can be changed in Render → Environment.
 
 ## 5. Connect the site
 Add the service address to `.env.local`:
