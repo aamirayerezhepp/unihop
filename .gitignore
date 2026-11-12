@@ -8,3 +8,4 @@ artifact
 server/.env
 server/.dev-token
 server/test/live-report.md
+dist-artifact

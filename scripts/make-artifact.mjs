@@ -5,7 +5,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-const dist = join(root, 'dist');
+const dist = join(root, 'dist-artifact');
 const html = readFileSync(join(dist, 'index.html'), 'utf8');
 const jsPath = html.match(/<script[^>]*src="\.\/(assets\/[^"]+\.js)"/)[1];
 const cssPath = html.match(/<link[^>]*href="\.\/(assets\/[^"]+\.css)"/)[1];
