@@ -6,8 +6,9 @@ services:
     runtime: node
     plan: free
     region: frankfurt
-    buildCommand: npm install --prefix server --omit=dev && node scripts/build-kb.mjs
-    startCommand: node server/index.js
+    # Same commands work for a service created by hand: Root Directory empty, Build `npm install`, Start `npm start`.
+    buildCommand: npm install
+    startCommand: npm start
     healthCheckPath: /health
     autoDeploy: true
     envVars:

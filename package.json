@@ -3,19 +3,23 @@
   "private": true,
   "version": "0.2.0",
   "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "artifact": "vite build --mode artifact && node scripts/make-artifact.mjs"
+    "artifact": "vite build --mode artifact && node scripts/make-artifact.mjs",
+    "start": "node server/index.js",
+    "build:server": "node scripts/build-kb.mjs"
   },
   "dependencies": {
-    "firebase": "10.12.2",
-    "react": "18.3.1",
-    "react-dom": "18.3.1"
-  },
-  "devDependencies": {
     "@vitejs/plugin-react": "4.3.4",
+    "firebase": "10.12.2",
+    "firebase-admin": "14.5.0",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
     "vite": "5.4.11"
   }
 }

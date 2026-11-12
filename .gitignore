@@ -7,5 +7,4 @@ artifact
 *.log
 server/.env
 server/.dev-token
-server/kb.json
 server/test/live-report.md

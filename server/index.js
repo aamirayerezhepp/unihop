@@ -11,6 +11,10 @@ import { firestoreStore, memoryStore } from './store.js';
 const env = process.env;
 const LOCAL = process.argv.includes('--local');
 const num = (v, d) => v !== undefined && v !== '' && !Number.isNaN(Number(v)) ? Number(v) : d;
+/* The verified database snapshot. Rebuilt from src/data at startup when the full repository is present,
+   so the server never depends on a separate build step; otherwise the committed server/kb.json is used. */
+try { await import('../scripts/build-kb.mjs'); }
+catch (e) { console.warn('using the committed server/kb.json (could not rebuild it: ' + (e.code || e.message) + ')'); }
 const kb = JSON.parse(readFileSync(new URL('./kb.json', import.meta.url), 'utf8'));
 
 const cfg = {
