@@ -44,7 +44,7 @@ const post = (q, extra = {}) => fetch(base + '/', {method:'POST', signal:extra.s
 
 try {
   const h = await (await fetch(base + '/health')).json();
-  ok(h.ok && h.configured && h.model === 'kimi-k3.1-pro' && h.limits === 'memory', 'health reports configuration');
+  ok(h.ok && h.configured && h.model === 'kimi-k3.1-pro-highspeed' && h.limits === 'memory', 'health reports configuration');
   const s = await (await fetch(base + '/')).json();
   ok(s.configured === true, 'GET / says configured');
 

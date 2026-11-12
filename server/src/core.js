@@ -15,7 +15,7 @@ const TOOLS = [{type:'function', function:{
 }}];
 
 export const DEFAULTS = {
-  enabled:true, model:'kimi-k3.1-pro', baseUrl:'https://api.moonshot.ai/v1', reasoningEffort:'low',
+  enabled:true, model:'kimi-k3.1-pro-highspeed', baseUrl:'https://api.moonshot.ai/v1', reasoningEffort:'low',
   origins:['https://unihop-88ba6.web.app', 'https://unihop-88ba6.firebaseapp.com', 'http://localhost:5173'],
   requireGoogle:true,
   maxInputChars:1200, maxDraftChars:5000, letterHistoryChars:14000, maxAssistantChars:2000, historyTurns:8, historyChars:8000, maxOutputTokens:2500,

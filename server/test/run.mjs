@@ -116,7 +116,7 @@ const make = (fetchImpl, extra = {}) => { const store = memStore(); const logs =
   ok(ev.filter(e => e.t === 'delta').map(e => e.text).join('').includes('IELTS 6.5'), 'answer text streams to the browser');
   ok(ev.some(e => e.t === 'sources' && e.items.some(s => s.url === 'https://apply.elte.hu/enter/200')), 'cited source is returned');
   ok(ev[ev.length - 1].t === 'done', 'stream ends with done');
-  ok(sent.model === 'kimi-k3.1-pro' && sent.stream === true && sent.reasoning_effort === 'low' && sent.max_completion_tokens === 2500 && !('temperature' in sent), 'request uses configured model and limits, no fixed params');
+  ok(sent.model === 'kimi-k3.1-pro-highspeed' && sent.stream === true && sent.reasoning_effort === 'low' && sent.max_completion_tokens === 2500 && !('temperature' in sent), 'request uses configured model and limits, no fixed params');
   ok(sent.messages[0].role === 'system' && sent.messages[0].content.includes('[программа id=elte-psy]') && sent.messages[0].content.includes('IELTS 6.5'), 'system prompt carries the saved programme data');
   ok(sent.messages[0].content.includes('хочет начать учёбу осенью 2027'), 'system prompt carries the profile');
   ok(a.store.releases[0] === 1050, 'token usage is counted toward the cap');

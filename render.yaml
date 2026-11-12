@@ -21,7 +21,7 @@ services:
       - key: FIREBASE_PROJECT_ID
         value: unihop-88ba6
       - key: KIMI_MODEL
-        value: kimi-k3.1-pro
+        value: kimi-k3.1-pro-highspeed
       - key: KIMI_BASE_URL
         value: https://api.moonshot.ai/v1
       - key: KOYAN_ALLOWED_ORIGINS

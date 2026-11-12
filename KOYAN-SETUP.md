@@ -4,7 +4,7 @@ Firebase stays on the free **Spark** plan (Hosting + Firestore). Қоян's serv
 
 ```
 site (Firebase Hosting)  →  server/ on Render  →  Kimi API
-  no keys                     key in Render's        kimi-k3.1-pro
+  no keys                     key in Render's        kimi-k3.1-pro-highspeed
   Google sign-in token        environment only
 ```
 
@@ -16,8 +16,8 @@ Until the steps below are done, the site shows «Чат временно нед�
 ## Cost and limits
 - **Firebase:** stays on the free Spark plan.
 - **Render free web service:** $0, 750 instance hours a month per workspace. It **sleeps after 15 idle minutes**, and the first request after that takes up to about a minute; the site shows «Қоян просыпается…».
-- **Kimi:** pay-as-you-go. Review sites list kimi-k3.1-pro at about $2 / 1M input and $10 / 1M output tokens; check the official price page. That is roughly $0.02–0.04 per answer.
-- **Default caps:** 30 messages a day per student, 60 per network address, one request at a time. Spending stops at 1M tokens a day or 10M a month (about $5 a day or $40 a month at those prices).
+- **Kimi:** pay-as-you-go. The server uses the fast kimi-k3.1-pro-highspeed (review sites list about $4 / 1M input and $20 / 1M output tokens, twice the regular kimi-k3.1-pro at $2 / $10); check the official price page. To switch back, set KIMI_MODEL=kimi-k3.1-pro in Render → Environment. With the fast model that is roughly $0.04–0.08 per answer.
+- **Default caps:** 30 messages a day per student, 60 per network address, one request at a time. Spending stops at 1M tokens a day or 10M a month (about $10 a day or $80 a month with the fast model; half that with the regular one).
 
 ## 1. Kimi key
 1. At https://platform.kimi.ai, top up the balance (minimum $1) and create a **new** API key.
