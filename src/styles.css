@@ -377,3 +377,12 @@ details.tech .body{color:var(--muted);margin-top:8px;max-width:62ch;display:flex
 .cols{columns:2 240px;padding-left:18px;margin:8px 0 0;font-size:14px}
 @media (max-width:480px){.pdetails .kv{grid-template-columns:1fr}}
 .hero-text .tag{white-space:normal;max-width:100%}
+/* Letter coach and support chat */
+.assist-links{gap:8px}
+.assist-links .pill{text-decoration:none}
+.letter-draft{min-height:220px;font:400 15px/1.55 var(--f-body)}
+.chat-form.multi{align-items:flex-end}
+.chat-form textarea{flex:1 1 auto;min-width:0;border:2px solid var(--ink);border-radius:16px;padding:10px 14px;font:inherit;resize:vertical;min-height:84px}
+.chat-count{padding:0 18px 10px;text-align:right}
+.bubble.me .linkbtn.light{display:block;margin-top:6px;color:#dce2ff}
+.bubble.crisis-bubble{background:var(--crit-soft);border:2px solid var(--crit);white-space:pre-wrap}

@@ -13,6 +13,7 @@ const PATHS = {
   grants: <><circle cx="12" cy="9" r="5" /><path d="M9 13.5L7.5 21l4.5-2.5 4.5 2.5L15 13.5" /></>,
   care: <path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z" />,
   koyan: <path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z" />,
+  letter: <><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" /></>,
   alerts: <><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9" /><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" /></>
 };
 export const Icon = ({ name }) => (
@@ -73,7 +74,7 @@ export function Cabinet({ children }){
   const items = [
     ['home', t('nav.home')], ['plan', t('nav.plan'), left], ['list', t('nav.list'), state.apps.length || null],
     ['docs', t('nav.docs'), `${docs.done}/${docs.total}`], ['grants', t('nav.grants'), fittingGrants(state.profile).length],
-    ['care', t('nav.care')], ['koyan', t('nav.koyan')], ['alerts', t('nav.alerts'), nAlerts || null]
+    ['care', t('nav.care')], ['koyan', t('nav.koyan')], ['letter', t('nav.letter')], ['alerts', t('nav.alerts'), nAlerts || null]
   ];
   return (
     <div className="cab">

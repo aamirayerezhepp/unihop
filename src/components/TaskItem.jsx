@@ -25,7 +25,7 @@ export default function TaskItem({ t: task }){
         <p className="task-title">{L(task.title)}</p>
         {task.detail && <p className="task-detail">{L(task.detail)}</p>}
         {task.missed && task.after && <p className="task-detail"><b>{t('plan.whatNow')}:</b> {L(task.after)}</p>}
-        {task.link && <a className="small bold" href={task.link}>{t('plan.toResult')} →</a>}
+        {task.link && <a className="small bold" href={task.link}>{t(task.linkKey || 'plan.toResult')} →</a>}
       </div>
       <div className="task-meta">
         <span title={official ? (task.approx ? t('task.approxTitle') : t('task.exactTitle')) : t('plan.recommended')}>

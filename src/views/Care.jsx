@@ -3,6 +3,7 @@ import { useApp } from '../state/AppState.jsx';
 import { Cabinet, PageHead } from '../components/Shell.jsx';
 import Koyan from '../components/Koyan.jsx';
 import { HELP } from '../data/reference.js';
+import ChatBox from '../components/ChatBox.jsx';
 import { lastCheckin, wellIndex, fmtIdx } from '../lib/logic.js';
 import { daysLeft, fmtShort, isoOf, today } from '../lib/dates.js';
 
@@ -131,6 +132,11 @@ export default function Care(){
           <div><button className="btn" type="submit">{t('care.save')}</button></div>
         </form>
       )}
+
+      <section className="stack">
+        <div><h2>{t('care.talkH')}</h2><p className="muted measure">{t('care.talkSub')}</p></div>
+        <ChatBox mode="care" title={t('care.coachName')} hello={t('care.hello')} quick={[t('care.q1'), t('care.q2'), t('care.q3')]} privacyKey="care.privacy" />
+      </section>
 
       {state.checkins.length > 0 && (
         <section className="card chart">

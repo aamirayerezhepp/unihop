@@ -103,6 +103,7 @@ export const PROGRAMS = [
     steps:[{key:'letter', ref:'early', before:21, src:'https://ppk.elte.hu/en/node/238347',
       title:g('Мотивационное письмо и резюме для ELTE','ELTE үшін мотивациялық хат және түйіндеме','Motivation letter and CV for ELTE'),
       detail:g('1500–2500 знаков, своими словами. Қоян поможет со структурой, но не напишет текст за тебя.','1500–2500 таңба, өз сөзіңмен. Қоян құрылымына көмектеседі, бірақ мәтінді сен үшін жазбайды.','1,500–2,500 characters, in your own words. Qoyan helps with structure but will not write it for you.')}],
+    letter:{min:1500, max:2500, src:'https://ppk.elte.hu/en/node/238347'},
     links:{program:'https://ppk.elte.hu/en/node/238347', admission:'https://apply.elte.hu/enter/200', funding:'https://stipendiumhungaricum.hu/apply'},
     unknown:[g('расходы на жизнь','тұрмыс шығындары','living costs'), g('учебный год, к которому относится плата','ақы қай оқу жылына жататыны','the academic year the fee applies to')],
     checked:CHECKED

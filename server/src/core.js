@@ -4,7 +4,8 @@
    GET: tells the site whether the chat is configured. Message text is never logged. */
 import { createHash } from 'node:crypto';
 import { createRetriever, contextText, sourcesOf } from './retrieve.js';
-import { systemPrompt } from './prompt.js';
+import { systemPrompt, letterPrompt, carePrompt } from './prompt.js';
+import { isCrisis, CRISIS_TEXT } from './crisis.js';
 import { streamChat, errorCode, retryable, KimiError } from './kimi.js';
 
 const TOOLS = [{type:'function', function:{
@@ -17,7 +18,7 @@ export const DEFAULTS = {
   enabled:true, model:'kimi-k3.1-pro', baseUrl:'https://api.moonshot.ai/v1', reasoningEffort:'low',
   origins:['https://unihop-88ba6.web.app', 'https://unihop-88ba6.firebaseapp.com', 'http://localhost:5173'],
   requireGoogle:true,
-  maxInputChars:1200, maxAssistantChars:2000, historyTurns:8, historyChars:8000, maxOutputTokens:2500,
+  maxInputChars:1200, maxDraftChars:5000, letterHistoryChars:14000, maxAssistantChars:2000, historyTurns:8, historyChars:8000, maxOutputTokens:2500,
   maxToolRounds:2, maxRetries:1, toolResultChars:6000,
   userDaily:30, ipDaily:60, maxConcurrent:1, lockMs:120000,
   dailyTokenCap:1000000, monthlyTokenCap:10000000, priceInPerM:0, priceOutPerM:0, monthlyUsdCap:0, salt:'unihop'
@@ -54,36 +55,57 @@ export function createKoyan(config, deps){
       uid = d.uid;
     } catch (e) { return res.status(401).json({code:'auth'}); }
 
-    /* input: shape and size */
+    /* input: shape and size. Three assistants share this endpoint: Қоян (questions), the letter coach, support. */
     const b = req.body && typeof req.body === 'object' ? req.body : {};
     const lang = ['ru', 'kz', 'en'].includes(b.lang) ? b.lang : 'ru';
+    const mode = ['koyan', 'letter', 'care'].includes(b.mode) ? b.mode : 'koyan';
+    const maxIn = mode === 'letter' ? cfg.maxDraftChars : cfg.maxInputChars;
+    const maxHist = mode === 'letter' ? cfg.letterHistoryChars : cfg.historyChars;
     let msgs = (Array.isArray(b.messages) ? b.messages : []).filter(m => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string');
     if (!msgs.length || msgs[msgs.length - 1].role !== 'user') return res.status(400).json({code:'input'});
     const question = msgs[msgs.length - 1].content.trim();
-    if (!question || question.length > cfg.maxInputChars) return res.status(400).json({code:'input'});
-    msgs = msgs.slice(-cfg.historyTurns).map(m => ({role:m.role, content:m.content.slice(0, m.role === 'user' ? cfg.maxInputChars : cfg.maxAssistantChars)}));
-    while (msgs.length > 1 && msgs.reduce((n, m) => n + m.content.length, 0) > cfg.historyChars) msgs.shift();
+    if (!question || question.length > maxIn) return res.status(400).json({code:'input'});
+    msgs = msgs.slice(-cfg.historyTurns).map(m => ({role:m.role, content:m.content.slice(0, m.role === 'user' ? maxIn : cfg.maxAssistantChars)}));
+    while (msgs.length > 1 && msgs.reduce((n, m) => n + m.content.length, 0) > maxHist) msgs.shift();
     while (msgs.length && msgs[0].role !== 'user') msgs.shift();
 
-    /* limits: per user, per network address, concurrency and the overall spending cap */
     const t0 = now(), day = t0.toISOString().slice(0, 10), month = day.slice(0, 7);
     const ip = String((req.headers['x-forwarded-for'] || '').split(',')[0] || req.ip || '').trim();
     const ipHash = sha(cfg.salt + '|' + ip), uidHash = sha(cfg.salt + '|' + uid);
-    const lock = await deps.store.reserve({uid, ipHash, day, month, at:t0.getTime(), cfg});
-    if (!lock.ok) { log({event:'koyan', uid:uidHash, code:lock.code}); return res.status(lock.code === 'budget' ? 503 : 429).json({code:lock.code}); }
+    const startStream = () => {
+      res.status(200);
+      res.set('Content-Type', 'text/event-stream; charset=utf-8'); res.set('Cache-Control', 'no-cache, no-transform'); res.set('X-Accel-Buffering', 'no');
+      if (res.flushHeaders) res.flushHeaders();
+    };
+    const send = o => res.write(`data: ${JSON.stringify(o)}\n\n`);
 
-    /* relevant fragments of the verified database */
+    /* crisis words: help numbers at once, without the model, without counting against limits or caps */
+    if (isCrisis(question)) {
+      startStream();
+      send({t:'delta', text:CRISIS_TEXT[lang]}); send({t:'crisis'}); send({t:'done'});
+      res.end();
+      log({event:'koyan', uid:uidHash, mode, code:'crisis'});
+      return;
+    }
+
+    /* limits: per user, per network address, concurrency and the overall spending cap */
+    const lock = await deps.store.reserve({uid, ipHash, day, month, at:t0.getTime(), cfg});
+    if (!lock.ok) { log({event:'koyan', uid:uidHash, mode, code:lock.code}); return res.status(lock.code === 'budget' ? 503 : 429).json({code:lock.code}); }
+
+    /* relevant fragments of the verified database (not for the support chat) */
     const apps = Array.isArray(b.apps) ? b.apps.slice(0, 10) : [];
     const programIds = [...(Array.isArray(b.focus) ? b.focus : []), ...apps.map(a => a && a.programId)].filter(x => typeof x === 'string').slice(0, 4);
     const prev = msgs.length > 1 ? msgs[msgs.length - 2].content.slice(0, 300) : '';
-    const found = retrieve(question + ' ' + prev, {programIds});
+    const found = mode === 'care' ? {programs:[], grants:[], catalog:[], facts:[]}
+      : retrieve(mode === 'letter' ? 'мотивационное письмо motivation letter' : question + ' ' + prev, {programIds, limit:mode === 'letter' ? {programs:0, grants:0, catalog:0, facts:0} : undefined});
     let sources = sourcesOf(found);
-    const system = systemPrompt({lang, today:day, profile:b.profile, apps, matches:b.matches, context:contextText(found), names:deps.kb.names});
+    const ctx = {lang, today:day, profile:b.profile, apps, names:deps.kb.names, context:contextText(found)};
+    const system = mode === 'letter' ? letterPrompt({...ctx, draftChars:question.length})
+      : mode === 'care' ? carePrompt({lang, today:day, profile:b.profile, checkin:b.checkin})
+      : systemPrompt({...ctx, matches:b.matches});
+    const toolRounds = mode === 'care' ? 0 : cfg.maxToolRounds;
 
-    res.status(200);
-    res.set('Content-Type', 'text/event-stream; charset=utf-8'); res.set('Cache-Control', 'no-cache, no-transform'); res.set('X-Accel-Buffering', 'no');
-    if (res.flushHeaders) res.flushHeaders();
-    const send = o => res.write(`data: ${JSON.stringify(o)}\n\n`);
+    startStream();
     const ctl = new AbortController();
     let finished = false;
     // The browser went away (tab closed or "Stop"): stop paying for the rest of the answer.
@@ -97,9 +119,9 @@ export function createKoyan(config, deps){
       for (;;) {
         rounds++;
         const body = {model:cfg.model, messages:conv, stream:true, stream_options:{include_usage:true}, max_completion_tokens:cfg.maxOutputTokens,
-          reasoning_effort:cfg.reasoningEffort, ...(tools < cfg.maxToolRounds ? {tools:TOOLS} : {})};
+          reasoning_effort:cfg.reasoningEffort, ...(tools < toolRounds ? {tools:TOOLS} : {})};
         const r = await callWithRetry(body);
-        if (r.finish === 'tool_calls' && r.toolCalls.length && tools < cfg.maxToolRounds) {
+        if (r.finish === 'tool_calls' && r.toolCalls.length && tools < toolRounds) {
           tools++;
           conv.push({role:'assistant', content:r.content || '', ...(r.reasoning ? {reasoning_content:r.reasoning} : {}), tool_calls:r.toolCalls});
           for (const tc of r.toolCalls) {
@@ -124,7 +146,7 @@ export function createKoyan(config, deps){
       res.end();
       const costMicro = Math.round(usage.in * cfg.priceInPerM + usage.out * cfg.priceOutPerM);
       await deps.store.release({uid, day, month, tokens:usage.in + usage.out, costMicro, at:t0.getTime()}).catch(() => {});
-      log({event:'koyan', uid:uidHash, ms:now().getTime() - t0.getTime(), rounds, tools, tokensIn:usage.in, tokensOut:usage.out, code:code || 'ok'});
+      log({event:'koyan', uid:uidHash, mode, ms:now().getTime() - t0.getTime(), rounds, tools, tokensIn:usage.in, tokensOut:usage.out, code:code || 'ok'});
     }
 
     /* one model call with streaming; content goes to the browser as it arrives */

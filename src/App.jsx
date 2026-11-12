@@ -8,10 +8,11 @@ import Docs from './views/Docs.jsx';
 import Grants from './views/Grants.jsx';
 import Care from './views/Care.jsx';
 import Chat from './views/Chat.jsx';
+import Letter from './views/Letter.jsx';
 import Alerts from './views/Alerts.jsx';
 
 /* home = landing before the test, personal account after it. */
-const VIEWS = {home:Home, test:TestView, result:Result, plan:Plan, list:List, docs:Docs, grants:Grants, care:Care, koyan:Chat, alerts:Alerts};
+const VIEWS = {home:Home, test:TestView, result:Result, plan:Plan, list:List, docs:Docs, grants:Grants, care:Care, koyan:Chat, letter:Letter, alerts:Alerts};
 const NAMES = Object.keys(VIEWS);
 
 export default function App(){

@@ -191,5 +191,42 @@ const make = (fetchImpl, extra = {}) => { const store = memStore(); const logs =
   ok(hist.length <= 8 && hist[0].role === 'user' && hist[hist.length - 1].content === 'последний вопрос', 'history is limited to the last turns and starts with the student');
 }
 
+{ // crisis words: help at once, no model call, no limit counted — in every assistant and language
+  let calls = 0;
+  const a = make(async () => { calls++; return sse([delta('x'), ...finish('stop', {prompt_tokens:1, completion_tokens:1})]); });
+  for (const [lang, mode, q, num] of [['ru', 'care', 'Я больше не хочу жить', '150'], ['kz', 'koyan', 'Өмір сүргім келмейді', '150'], ['en', 'letter', 'I want to kill myself', '150']]) {
+    const r = fakeRes(); await a.h(req({...body(q), lang, mode}), r);
+    const text = r.events().filter(e => e.t === 'delta').map(e => e.text).join('');
+    ok(text.includes(num) && text.includes('112') && r.events().some(e => e.t === 'crisis'), `crisis reply with hotlines [${lang}/${mode}]`);
+  }
+  ok(calls === 0 && a.store.reserveCalls === 0, 'crisis replies do not call the model or use limits');
+}
+{ // letter coach: own instructions, saved programme requirements, character count, longer drafts allowed
+  let sent;
+  const a = make(async (url, init) => { sent = JSON.parse(init.body); return sse([delta('Что уже работает: ...'), ...finish('stop', {prompt_tokens:1, completion_tokens:1})]); });
+  const draft = 'Я хочу изучать психологию, потому что ' + 'мой волонтёрский проект '.repeat(80);
+  const r = fakeRes(); await a.h(req({...body(draft), mode:'letter'}), r);
+  const sys = sent.messages[0].content;
+  ok(r.code === 200 && sys.includes('наставника по мотивационному письму') && sys.includes('Никогда не пиши письмо'), 'letter mode uses the coach instructions');
+  ok(sys.includes(`${draft.trim().length} знаков`), 'letter mode passes the exact draft length');
+  ok(sys.includes('[программа id=elte-psy]') && sys.includes('1500–2500'), 'letter mode includes the saved programme requirements');
+  ok(!sys.includes('[программа id=kaist-ug]'), 'letter mode does not pull unrelated programmes');
+  const long = fakeRes(); await a.h(req({...body('x'.repeat(5200)), mode:'letter'}), long);
+  ok(long.code === 400, 'drafts over 5000 characters are refused');
+  const short = fakeRes(); await a.h(req({...body('x'.repeat(1300)), mode:'koyan'}), short);
+  ok(short.code === 400, 'the 1200-character limit still applies to normal questions');
+}
+{ // support chat: own instructions, check-in, no database, no tools
+  let sent;
+  const a = make(async (url, init) => { sent = JSON.parse(init.body); return sse([delta('Слышу тебя.'), ...finish('stop', {prompt_tokens:1, completion_tokens:1})]); });
+  const r = fakeRes(); await a.h(req({...body('Очень боюсь не сдать IELTS, не могу спать'), mode:'care', checkin:{mood:2, sleep:1, stress:5, support:3}}), r);
+  const sys = sent.messages[0].content;
+  ok(sys.includes('Ты не психолог и не врач') && sys.includes('сон 1') && sys.includes('стресс 5'), 'support mode uses its instructions and the latest check-in');
+  ok(!sent.tools && !sys.includes('ДАННЫЕ:') && !sys.includes('[программа'), 'support mode sends no database and no tools');
+  ok(r.events().some(e => e.t === 'done'), 'support answer streams');
+  const bad = fakeRes(); await a.h(req({...body('привет'), mode:'care', checkin:{mood:'<script>', sleep:9}}), bad);
+  ok(!sent.messages[0].content.includes('<script>'), 'malformed check-in values are dropped');
+}
+
 console.log(`\n${passed} passed, ${failed} failed`);
 process.exit(failed ? 1 : 0);

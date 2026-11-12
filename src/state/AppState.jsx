@@ -3,13 +3,17 @@ import { empty, loadLocal, saveLocal, migrate } from '../lib/storage.js';
 import { hasData, rulesText } from '../lib/logic.js';
 import { DOC_STATES } from '../data/docs.js';
 import { translate, pick } from '../i18n/strings.js';
-import { uid } from '../lib/dates.js';
+import { uid, isoOf, today as todayDate } from '../lib/dates.js';
 import { toProfile, freshAnswers } from '../data/questions.js';
 import { go } from '../hooks/useHashRoute.js';
 import { googleEnabled, loadCloud } from '../lib/account.js';
 import { KOYAN_URL, koyanStatus, askKoyan as askKoyanApi } from '../lib/koyanClient.js';
 import { evaluate } from '../lib/match.js';
-import { programById } from '../data/programs.js';
+import { programById, LANGS } from '../data/programs.js';
+import { COUNTRIES, FIELDS } from '../data/reference.js';
+import { isCrisis, CRISIS_TEXT } from '../../server/src/crisis.js';
+import { letterPrompt, carePrompt } from '../../server/src/prompt.js';
+import { programText } from '../../server/src/retrieve.js';
 
 /* Without the failed question at the end, so "Try again" doesn't repeat it. */
 const dropLastQuestion = (turns, text) => {
@@ -21,6 +25,25 @@ const matchSummary = st => !st.profile ? [] : st.apps.filter(a => a.programId &&
   const r = evaluate(programById(a.programId), st.profile);
   return {id:a.programId, adm:r.adm.status, fund:r.fund.status, miss:[...r.adm.miss, ...r.fund.miss].map(x => x.ru), improve:[...r.adm.improve, ...r.fund.improve].map(x => x.ru)};
 });
+
+/* Inside a Claude artifact there is no server: the letter coach and support use the same instructions, built here. */
+const NAMES = {
+  home:Object.fromEntries(Object.entries(COUNTRIES).map(([k, v]) => [k, v.ru])),
+  fields:Object.fromEntries(FIELDS.map(([k, v]) => [k, {ru:v.ru}])),
+  langs:Object.fromEntries(Object.entries(LANGS).map(([k, v]) => [k, {ru:v.ru}]))
+};
+function artifactRules(st, mode, lastText){
+  if (mode === 'koyan') return rulesText(st);
+  const day = isoOf(todayDate);
+  if (mode === 'care') {
+    const lc = st.checkins.length ? st.checkins[st.checkins.length - 1] : null;
+    return carePrompt({lang:st.lang, today:day, profile:st.profile, checkin:lc});
+  }
+  const progs = st.apps.filter(a => a.programId).map(a => programById(a.programId)).filter(Boolean).slice(0, 4);
+  return letterPrompt({lang:st.lang, today:day, profile:st.profile, names:NAMES, draftChars:(lastText || '').trim().length,
+    apps:st.apps.map(a => ({name:a.name, programId:a.programId, deadline:a.deadline})),
+    context:progs.length ? 'ПРОВЕРЕННЫЕ ПРОГРАММЫ:\n' + progs.map(programText).join('\n\n') : 'Ученик ещё не сохранил программы.'});
+}
 
 const Ctx = createContext(null);
 export const useApp = () => useContext(Ctx);
@@ -162,35 +185,50 @@ export function AppStateProvider({ children }){
   const addApp = useCallback(app => update(s => { s.apps.push({id:uid(), status:'prep', checks:{}, deadline:'', basket:'', kind:'uni', ...app}); }), [update]);
   const resetAll = useCallback(() => { setState(prev => empty(prev.lang)); setTest(null); }, []);
 
-  /* ---- chat with Қоян (kept in memory only) ---- */
-  const [chat, setChat] = useState({turns:[], busy:false, errKey:'', retry:''});
-  const chatRef = useRef(chat); chatRef.current = chat;
+  /* ---- three assistants, one conversation each (kept in memory only):
+     koyan — questions about admission; letter — motivation-letter coach; care — support ---- */
+  const EMPTY_CHAT = {turns:[], busy:false, errKey:'', retry:''};
+  const [chats, setChats] = useState({koyan:EMPTY_CHAT, letter:EMPTY_CHAT, care:EMPTY_CHAT});
+  const chatsRef = useRef(chats); chatsRef.current = chats;
   const stateRef = useRef(state); stateRef.current = state;
-  const ctlRef = useRef(null), focusRef = useRef([]);
+  const ctlRef = useRef({}), focusRef = useRef([]);
 
-  const sendChat = useCallback(async (raw, {retry = false} = {}) => {
+  const sendChat = useCallback(async (raw, {retry = false, mode = 'koyan', focus = null} = {}) => {
     const text = (raw || '').trim();
-    if (!text || chatRef.current.busy || !chatAvail) return;
+    const cur = chatsRef.current[mode];
+    if (!text || cur.busy) return;
+    const setChat = fn => setChats(all => ({...all, [mode]:fn(all[mode])}));
     // A retry replaces the failed question instead of adding it twice.
-    const base = retry ? dropLastQuestion(chatRef.current.turns, text) : chatRef.current.turns;
+    const base = retry ? dropLastQuestion(cur.turns, text) : cur.turns;
     const userTurn = {id:uid(), role:'user', content:text};
+    const lang0 = stateRef.current.lang || 'ru';
+
+    /* crisis words: help numbers at once, in the browser — works even when the server is asleep or down */
+    if (isCrisis(text)) {
+      setChat(c => ({...c, errKey:'', retry:'', turns:[...base, userTurn, {id:uid(), role:'assistant', content:CRISIS_TEXT[lang0] || CRISIS_TEXT.ru, crisis:true, local:true}]}));
+      return;
+    }
+    if (!chatAvail) return;
     const pid = uid();
     let hist = [...base, userTurn].filter(t => !t.pending && !t.local && t.content).slice(-16);
     while (hist.length && hist[0].role !== 'user') hist.shift();
-    chatRef.current = {...chatRef.current, busy:true};
+    chatsRef.current = {...chatsRef.current, [mode]:{...cur, busy:true}};
     setChat(c => ({...c, errKey:'', retry:'', busy:true, turns:[...base, userTurn, {id:pid, role:'assistant', content:'', pending:true}]}));
     const patch = p => setChat(c => ({...c, turns:c.turns.map(t => t.id === pid ? {...t, ...p} : t)}));
-    const ctl = new AbortController(); ctlRef.current = ctl;
+    const ctl = new AbortController(); ctlRef.current[mode] = ctl;
 
     if (!sample) {
-      /* standalone site: our server function -> Kimi */
+      /* standalone site: our server -> Kimi */
       let acc = '';
       try {
         const token = await gcloud.current.idToken();
         const st = stateRef.current;
-        const payload = {lang:st.lang || 'ru', profile:st.profile, apps:st.apps.map(a => ({name:a.name, programId:a.programId || null, deadline:a.deadline || ''})),
-          matches:matchSummary(st), focus:focusRef.current, messages:hist.map(t => ({role:t.role, content:t.content}))};
-        focusRef.current = [];
+        const lc = st.checkins.length ? st.checkins[st.checkins.length - 1] : null;
+        const payload = {mode, lang:st.lang || 'ru', profile:st.profile, apps:st.apps.map(a => ({name:a.name, programId:a.programId || null, deadline:a.deadline || ''})),
+          matches:mode === 'koyan' ? matchSummary(st) : undefined, focus:focus || (mode === 'koyan' ? focusRef.current : []),
+          checkin:mode === 'care' && lc ? {mood:lc.mood, sleep:lc.sleep, stress:lc.stress, support:lc.support} : undefined,
+          messages:hist.map(t => ({role:t.role, content:t.content}))};
+        if (mode === 'koyan') focusRef.current = [];
         const r = await askKoyanApi({token, payload, signal:ctl.signal, onDelta:d => { acc += d; patch({content:acc}); }});
         patch({content:acc, pending:false, sources:r.sources, noteKey:r.truncated ? 'chat.truncated' : ''});
       } catch (e) {
@@ -204,13 +242,14 @@ export function AppStateProvider({ children }){
             turns:acc ? c.turns.map(t => t.id === pid ? {...t, pending:false, noteKey:'chat.cut'} : t) : c.turns.filter(t => t.id !== pid)}));
         }
       } finally {
-        ctlRef.current = null;
+        ctlRef.current[mode] = null;
         setChat(c => ({...c, busy:false}));
       }
       return;
     }
 
-    const input = [{role:'user', content:rulesText(stateRef.current)}, ...hist.map(t => ({role:t.role, content:t.content}))];
+    /* inside a Claude artifact: the same instructions, built in the browser */
+    const input = [{role:'user', content:artifactRules(stateRef.current, mode, text)}, ...hist.map(t => ({role:t.role, content:t.content}))];
     try {
       const r = await sample(input, {cache:false, signal:ctl.signal, onText:({text}) => patch({content:text})});
       patch({content:r.text, pending:false, noteKey:r.truncated ? 'chat.truncated' : ''});
@@ -225,11 +264,12 @@ export function AppStateProvider({ children }){
       else { errKey = 'chat.net'; if (content) extra.noteKey = 'chat.cut'; }
       setChat(c => ({...c, errKey, retry:errKey && errKey !== 'chat.refused' ? text : '', turns:content ? c.turns.map(t => t.id === pid ? {...t, ...extra, content, pending:false} : t) : c.turns.filter(t => t.id !== pid)}));
     } finally {
-      ctlRef.current = null;
+      ctlRef.current[mode] = null;
       setChat(c => ({...c, busy:false}));
     }
   }, [sample, chatAvail]);
-  const stopChat = useCallback(() => { if (ctlRef.current) ctlRef.current.abort(); }, []);
+  const stopChat = useCallback((mode = 'koyan') => { if (ctlRef.current[mode]) ctlRef.current[mode].abort(); }, []);
+  const chat = chats.koyan;
   /* "Ask Қоян" buttons elsewhere put a ready question into the chat box (and tell the server which programme it is about). */
   const [chatDraft, setChatDraft] = useState('');
   const askKoyan = useCallback((text, programId) => { setChatDraft(text); focusRef.current = programId ? [programId] : []; go('koyan'); }, []);
@@ -240,9 +280,9 @@ export function AppStateProvider({ children }){
     state, update, mode, lang, t, L, setLang,
     toggleTask, cycleDoc, addApp, resetAll,
     test, setTest, startTest, finishTest,
-    chat, chatAvail, sendChat, stopChat, chatDraft, setChatDraft, askKoyan,
+    chat, chats, chatAvail, sendChat, stopChat, chatDraft, setChatDraft, askKoyan,
     account, signInGoogle, signOutGoogle
-  }), [state, update, mode, lang, t, L, setLang, toggleTask, cycleDoc, addApp, resetAll, test, startTest, finishTest, chat, chatAvail, sendChat, stopChat, chatDraft, askKoyan, account, signInGoogle, signOutGoogle]);
+  }), [state, update, mode, lang, t, L, setLang, toggleTask, cycleDoc, addApp, resetAll, test, startTest, finishTest, chat, chats, chatAvail, sendChat, stopChat, chatDraft, askKoyan, account, signInGoogle, signOutGoogle]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

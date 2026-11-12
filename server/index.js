@@ -23,6 +23,7 @@ const cfg = {
   origins:(env.KOYAN_ALLOWED_ORIGINS || DEFAULTS.origins.join(',')).split(',').map(s => s.trim()).filter(Boolean),
   salt:env.KOYAN_HASH_SALT || DEFAULTS.salt,
   maxInputChars:num(env.KOYAN_MAX_INPUT_CHARS, DEFAULTS.maxInputChars), historyTurns:num(env.KOYAN_HISTORY_TURNS, DEFAULTS.historyTurns),
+  maxDraftChars:num(env.KOYAN_MAX_DRAFT_CHARS, DEFAULTS.maxDraftChars),
   historyChars:num(env.KOYAN_HISTORY_CHARS, DEFAULTS.historyChars), maxOutputTokens:num(env.KOYAN_MAX_OUTPUT_TOKENS, DEFAULTS.maxOutputTokens),
   maxToolRounds:num(env.KOYAN_MAX_TOOL_ROUNDS, DEFAULTS.maxToolRounds), maxRetries:num(env.KOYAN_MAX_RETRIES, DEFAULTS.maxRetries),
   userDaily:num(env.KOYAN_USER_DAILY_MESSAGES, DEFAULTS.userDaily), ipDaily:num(env.KOYAN_IP_DAILY_MESSAGES, DEFAULTS.ipDaily),

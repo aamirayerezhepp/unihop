@@ -48,7 +48,7 @@ export function buildPlan(state){
     }
     for (const s of pr.steps || []) {
       const ref = (pr.deadlines || []).find(d => d.key === s.ref) || (pr.deadlines || [])[0];
-      out.push({id:`s-${pr.id}-${s.key}`, kind:'prep', title:s.title, detail:s.detail, src:s.src || null,
+      out.push({id:`s-${pr.id}-${s.key}`, kind:'prep', title:s.title, detail:s.detail, src:s.src || null, ...(s.key === 'letter' ? {link:'#letter', linkKey:'nav.letter'} : {}),
         date:s.date || (ref ? addDays(ref.date, -(s.before || 21)) : addDays(now, 14))});
     }
   }
@@ -64,7 +64,7 @@ export function buildPlan(state){
   const prep = (id, title, detail, date, extra = {}) => out.push({id, kind:'prep', title, detail, date, ...extra});
 
   if (!progs.length && !state.apps.length) prep('pick', g('Выбрать 2–4 программы в подборе и сохранить их','Іріктеуден 2–4 бағдарлама таңдап, сақтау','Choose 2–4 programmes from your matches and save them'),
-    g('Тогда в плане появятся их официальные сроки.','Сонда жоспарда олардың ресми мерзімдері пайда болады.','Their official deadlines will then appear in your plan.'), addDays(now, 7), {link:'#result', alias:'list'});
+    g('Тогда в плане появятся их официальные сроки.','Сонда жоспарда олардың ресми мерзімдері пайда болады.','Their official deadlines will then appear in your plan.'), addDays(now, 7), {link:'#result', linkKey:'plan.toResult', alias:'list'});
 
   /* English: the target is the highest minimum among saved programmes, or 6.5 when none is saved */
   const need = Math.max(0, ...progs.map(x => (x.pr.req.english && x.pr.req.english.ielts) || 0)) || 6.5;
